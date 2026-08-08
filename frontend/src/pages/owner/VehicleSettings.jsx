@@ -24,6 +24,19 @@ export default function VehicleSettings() {
 
   if (!vehicle || !settings) return <div className="container">Vehicle not found</div>;
 
+  if (vehicle.status === 'active') {
+    return (
+      <div className="container" style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <h2 style={{ marginBottom: 'var(--space-6)' }}>Settings: {vehicle.vehicleName}</h2>
+        <div className="card text-center" style={{ padding: 'var(--space-8)' }}>
+          <h3 className="text-error">Settings Locked</h3>
+          <p className="text-muted">This vehicle is currently on an active ride. You cannot modify its settings until the ride is completed.</p>
+          <button className="btn btn-outline" style={{ marginTop: 'var(--space-4)' }} onClick={() => navigate('/owner/dashboard')}>Back to Dashboard</button>
+        </div>
+      </div>
+    );
+  }
+
   const handleSave = () => {
     updateListing(id, {
       ...settings,

@@ -1,109 +1,14 @@
-/* App specific styles */
+/* App.css - Top-level layout adjustments */
 
-.top-nav {
+/* Landing page needs full width (no container padding) */
+.landing-page .main-content {
+  padding: 0;
+  max-width: 100%;
+}
+
+/* TopNav sticky behavior */
+.top-nav-sticky {
   position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  background-color: var(--surface);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-4) var(--space-6);
   z-index: 1000;
-  box-shadow: var(--shadow-sm);
-}
-
-.top-nav-logo {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--primary);
-  text-decoration: none;
-}
-
-.top-nav-links {
-  display: flex;
-  gap: var(--space-6);
-  align-items: center;
-}
-
-.nav-link {
-  color: var(--text-muted);
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 16px;
-  transition: color 0.2s;
-}
-
-.nav-link:hover, .nav-link.active {
-  color: var(--primary);
-}
-
-.role-toggle {
-  display: flex;
-  background-color: var(--bg-color);
-  border-radius: var(--radius-full);
-  padding: 4px;
-}
-
-.role-btn {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-full);
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.role-btn.active {
-  background-color: var(--surface);
-  color: var(--text-main);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Grid Layouts for Web */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
-}
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-6);
-}
-
-/* Search Bar on Home */
-.hero-search {
-  background-color: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  box-shadow: var(--shadow-md);
-  margin-top: -60px;
-  position: relative;
-  z-index: 10;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
-  gap: var(--space-4);
-}
-
-.hero-search input {
-  flex: 1;
-  padding: var(--space-4);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 16px;
-  font-family: inherit;
-}
-
-.avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  background-color: var(--border-color);
 }

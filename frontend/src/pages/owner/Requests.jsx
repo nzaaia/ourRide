@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Requests() {
   const { data, user, updateBookingStatus } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState('incoming');
 
   const myListings = data.listings.filter(l => l.ownerId === user.id);
@@ -12,38 +14,69 @@ export default function Requests() {
   const incoming = myRequests.filter(req => req.status === 'pending');
   const past = myRequests.filter(req => req.status !== 'pending');
 
+  const [selectedReq, setSelectedReq] = useState(null);
+  
   const handleAction = (id, action) => {
     updateBookingStatus(id, action);
+    if (action === 'accepted') {
+      alert('Request accepted! You can now message the renter.');
+    }
   };
 
   const renderRequestCard = (req, isIncoming) => {
     const vehicle = myListings.find(l => l.id === req.vehicleId);
+    const isExpanded = selectedReq === req.id;
     
     return (
-      <div key={req.id} className="card flex justify-between items-center" style={{ marginBottom: 'var(--space-4)' }}>
-        <div className="flex items-center gap-4">
-          <img src={req.renterAvatar} alt={req.renterName} className="avatar" style={{ width: '64px', height: '64px' }} />
-          <div>
-            <h4 style={{ margin: 0, fontSize: '18px' }}>{req.renterName} wants to rent {vehicle.vehicleName}</h4>
-            <p className="text-muted" style={{ margin: 0 }}>Duration: {req.estimatedDuration} hours • Pickup: {req.pickupLocation}</p>
-            <div className="font-bold text-primary" style={{ marginTop: 'var(--space-2)' }}>Estimated Fare: ৳{req.estimatedFare}</div>
+      <div key={req.id} className="card flex-col" style={{ marginBottom: 'var(--space-4)', cursor: 'pointer' }} onClick={() => setSelectedReq(isExpanded ? null : req.id)}>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <img src={req.renterAvatar} alt={req.renterName} className="avatar" style={{ width: '64px', height: '64px' }} />
+            <div>
+              <h4 style={{ margin: 0, fontSize: '18px' }}>{req.renterName} wants to rent {vehicle.vehicleName}</h4>
+              <p className="text-muted" style={{ margin: 0 }}>Duration: {req.estimatedDuration} hours • Pickup: {req.pickupLocation}</p>
+              <div className="font-bold text-primary" style={{ marginTop: 'var(--space-2)' }}>Estimated Fare: ৳{req.estimatedFare}</div>
+            </div>
           </div>
+          
+          {isIncoming ? (
+            <div className="flex gap-2">
+              <button className="btn btn-outline flex items-center gap-2" style={{ width: 'auto', borderColor: 'var(--error)', color: 'var(--error)' }} onClick={(e) => { e.stopPropagation(); handleAction(req.id, 'rejected'); }}>
+                <XCircle size={18} /> Reject
+              </button>
+              <button className="btn btn-primary flex items-center gap-2" style={{ width: 'auto' }} onClick={(e) => { e.stopPropagation(); handleAction(req.id, 'accepted'); }}>
+                <CheckCircle size={18} /> Accept
+              </button>
+            </div>
+          ) : (
+            <div>
+              <span className={`font-bold ${req.status === 'accepted' ? 'text-primary' : 'text-muted'}`} style={{ textTransform: 'capitalize' }}>
+                {req.status}
+              </span>
+            </div>
+          )}
         </div>
-        
-        {isIncoming ? (
-          <div className="flex gap-2">
-            <button className="btn btn-outline flex items-center gap-2" style={{ width: 'auto', borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => handleAction(req.id, 'rejected')}>
-              <XCircle size={18} /> Reject
-            </button>
-            <button className="btn btn-primary flex items-center gap-2" style={{ width: 'auto' }} onClick={() => handleAction(req.id, 'accepted')}>
-              <CheckCircle size={18} /> Accept
-            </button>
-          </div>
-        ) : (
-          <div>
-            <span className={`font-bold ${req.status === 'accepted' ? 'text-primary' : 'text-muted'}`} style={{ textTransform: 'capitalize' }}>
-              {req.status}
-            </span>
+
+        {isExpanded && (
+          <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--border-color)' }}>
+            <h4>Renter Details</h4>
+            <div className="flex gap-6 mb-4">
+              <div>
+                <div className="text-muted text-sm">Avg Rating</div>
+                <div className="font-bold">4.8 / 5.0</div>
+              </div>
+              <div>
+                <div className="text-muted text-sm">Total Past Rides</div>
+                <div className="font-bold">24</div>
+              </div>
+            </div>
+            
+            {req.status === 'accepted' && (
+              <div className="flex gap-4">
+                <button className="btn btn-primary flex items-center justify-center gap-2" style={{ flex: 1 }} onClick={() => navigate('/chat')}>Message {req.renterName}</button>
+                <button className="btn btn-outline flex items-center justify-center gap-2" style={{ flex: 1 }}>Call {req.renterName}</button>
+              </div>
+            )}
           </div>
         )}
       </div>

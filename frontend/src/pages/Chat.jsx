@@ -1,0 +1,96 @@
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { ChevronLeft, Send, Phone } from 'lucide-react';
+
+export default function Chat() {
+  const navigate = useNavigate();
+  const { user, messages, addMessage } = useAuth();
+  const [text, setText] = useState('');
+  const bottomRef = useRef(null);
+
+  // Filter messages for current chat (mocking single chat for simplicity)
+  const chatMessages = messages;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    
+    addMessage('chat1', text, user.id);
+    setText('');
+    
+    // Mock reply
+    setTimeout(() => {
+      addMessage('chat1', 'Okay, sounds good! I will be waiting.', 'other-user');
+    }, 2000);
+  };
+
+  return (
+    <div className="container" style={{ maxWidth: '600px', margin: '0 auto', padding: 0, height: '80vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Header */}
+      <div className="flex justify-between items-center" style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="btn btn-outline" style={{ padding: '8px', border: 'none' }}>
+            <ChevronLeft size={24} />
+          </button>
+          <div className="flex items-center gap-3">
+            <img src="https://i.pravatar.cc/150?u=passenger" alt="Passenger" className="avatar" style={{ width: '40px', height: '40px' }} />
+            <div>
+              <div className="font-bold">Fahim (Passenger)</div>
+              <div className="text-sm text-primary">Active ride</div>
+            </div>
+          </div>
+        </div>
+        <button className="btn btn-outline" style={{ padding: '8px', borderRadius: '50%' }}>
+          <Phone size={20} />
+        </button>
+      </div>
+
+      {/* Messages Area */}
+      <div style={{ flex: 1, padding: 'var(--space-4)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', backgroundColor: 'var(--bg-color)' }}>
+        <div className="text-center text-sm text-muted mb-4">Chat securely with your passenger/rider. Do not share personal passwords.</div>
+        
+        {chatMessages.length === 0 && (
+          <div className="text-center text-muted flex items-center justify-center h-full">No messages yet. Send a message to coordinate!</div>
+        )}
+
+        {chatMessages.map(msg => {
+          const isMe = msg.senderId === user.id;
+          return (
+            <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+              <div style={{
+                maxWidth: '70%',
+                padding: '12px 16px',
+                borderRadius: isMe ? '16px 16px 0 16px' : '16px 16px 16px 0',
+                backgroundColor: isMe ? 'var(--primary)' : 'var(--surface)',
+                color: isMe ? 'white' : 'var(--text-main)',
+                boxShadow: 'var(--shadow-sm)'
+              }}>
+                {msg.text}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input Area */}
+      <form onSubmit={handleSend} className="flex gap-2" style={{ padding: 'var(--space-4)', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--surface)' }}>
+        <input 
+          type="text" 
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Type a message..." 
+          style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border-color)', outline: 'none' }}
+        />
+        <button type="submit" className="btn btn-primary" style={{ borderRadius: '50%', width: '48px', height: '48px', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Send size={20} />
+        </button>
+      </form>
+    </div>
+  );
+}

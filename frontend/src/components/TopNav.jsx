@@ -1,69 +1,164 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Car, Bike, User } from 'lucide-react';
+import { LogIn, LogOut, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 export default function TopNav() {
-  const { role, toggleRole, user } = useAuth();
+  const { isAuthenticated, role, toggleRole, user, login, logout } = useAuth();
   const navigate = useNavigate();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const navLinks = {
+    owner: [
+      { to: '/owner/dashboard', label: 'Dashboard' },
+      { to: '/owner/requests', label: 'Requests' },
+      { to: '/owner/earnings', label: 'Earnings' },
+    ],
+    renter: [
+      { to: '/renter/dashboard', label: 'Dashboard' },
+      { to: '/renter/browse', label: 'Browse Bikes' },
+    ],
+    passenger: [
+      { to: '/passenger/search', label: 'Find a Ride' },
+    ],
+  };
+
+  const currentLinks = isAuthenticated ? (navLinks[role] || []) : [
+    { to: '/renter/browse', label: 'Browse Bikes' },
+    { to: '/passenger/search', label: 'Find a Ride' },
+  ];
 
   return (
-    <nav className="top-nav">
-      <div className="flex items-center gap-6">
-        <NavLink to="/" className="top-nav-logo">
+    <nav style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 1000,
+      background: 'white',
+      borderBottom: '1px solid var(--border-color)',
+      boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+      padding: '0 32px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      height: 64
+    }}>
+      {/* Logo + Links */}
+      <div className="flex items-center gap-8">
+        <NavLink to="/" style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', textDecoration: 'none', letterSpacing: -0.5 }}>
           OurBike
         </NavLink>
-        
-        {role === 'owner' && (
-          <div className="top-nav-links">
-            <NavLink to="/owner/dashboard" className="nav-link">Dashboard</NavLink>
-            <NavLink to="/owner/requests" className="nav-link">Requests</NavLink>
-            <NavLink to="/owner/earnings" className="nav-link">Earnings</NavLink>
-          </div>
-        )}
-        
-        {role === 'renter' && (
-          <div className="top-nav-links">
-            <NavLink to="/renter/dashboard" className="nav-link">Dashboard</NavLink>
-            <NavLink to="/renter/browse" className="nav-link">Browse Bikes</NavLink>
-          </div>
-        )}
-        
-        {role === 'passenger' && (
-          <div className="top-nav-links">
-            <NavLink to="/passenger/search" className="nav-link">Find a Ride</NavLink>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {currentLinks.map(link => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              style={({ isActive }) => ({
+                padding: '6px 14px',
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 15,
+                color: isActive ? 'var(--primary)' : 'var(--text-muted)',
+                textDecoration: 'none',
+                background: isActive ? 'var(--primary-light)' : 'transparent',
+                transition: 'all 0.2s'
+              })}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </div>
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="role-toggle">
-          <button 
-            className={`role-btn ${role === 'owner' ? 'active' : ''}`}
-            onClick={() => { toggleRole('owner'); navigate('/owner/dashboard'); }}
-          >
-            Owner
-          </button>
-          <button 
-            className={`role-btn ${role === 'renter' ? 'active' : ''}`}
-            onClick={() => { toggleRole('renter'); navigate('/renter/dashboard'); }}
-          >
-            Renter
-          </button>
-          <button 
-            className={`role-btn ${role === 'passenger' ? 'active' : ''}`}
-            onClick={() => { toggleRole('passenger'); navigate('/passenger/search'); }}
-          >
-            Passenger
-          </button>
-        </div>
-        
-        {user ? (
-          <div className="flex items-center gap-3">
-            <img src={user.avatar} alt={user.name} className="avatar" style={{ width: '36px', height: '36px' }} />
-            <span className="font-semibold">{user.name}</span>
+      {/* Right: Role Toggle + User */}
+      <div className="flex items-center gap-4">
+
+        {/* Role Switcher */}
+        {isAuthenticated && (
+          <div style={{
+            display: 'flex',
+            background: 'var(--bg-color)',
+            borderRadius: 10,
+            padding: 4,
+            border: '1px solid var(--border-color)'
+          }}>
+            {[
+              { id: 'owner', label: 'Owner' },
+              { id: 'renter', label: 'Renter' },
+              { id: 'passenger', label: 'Passenger' },
+            ].map(r => (
+              <button
+                key={r.id}
+                onClick={() => {
+                  toggleRole(r.id);
+                  const dest = r.id === 'owner' ? '/owner/dashboard' : r.id === 'renter' ? '/renter/dashboard' : '/passenger/search';
+                  navigate(dest);
+                }}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 7,
+                  fontWeight: 600,
+                  fontSize: 14,
+                  background: role === r.id ? 'white' : 'transparent',
+                  color: role === r.id ? 'var(--text-main)' : 'var(--text-muted)',
+                  boxShadow: role === r.id ? 'var(--shadow-sm)' : 'none',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* User menu / login */}
+        {isAuthenticated && user ? (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: 'var(--bg-color)', border: '1px solid var(--border-color)',
+                borderRadius: 10, padding: '6px 14px 6px 8px', cursor: 'pointer'
+              }}
+            >
+              <img src={user.avatar} alt={user.name} className="avatar" style={{ width: 32, height: 32 }} />
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{user.name.split(' ')[0]}</span>
+              <ChevronDown size={15} color="var(--text-muted)" />
+            </button>
+
+            {showUserMenu && (
+              <div style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 8,
+                background: 'white', border: '1px solid var(--border-color)',
+                borderRadius: 12, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', minWidth: 180, zIndex: 100
+              }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div className="font-semibold" style={{ marginBottom: 2 }}>{user.name}</div>
+                  <div className="text-muted text-sm">{user.email}</div>
+                </div>
+                <button
+                  onClick={() => { logout(); navigate('/'); setShowUserMenu(false); }}
+                  style={{
+                    width: '100%', padding: '12px 20px', textAlign: 'left',
+                    fontWeight: 600, color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 10,
+                    cursor: 'pointer', border: 'none', background: 'none', fontSize: 15
+                  }}
+                >
+                  <LogOut size={16} /> Log Out
+                </button>
+              </div>
+            )}
           </div>
         ) : (
-          <button className="btn btn-primary" style={{ padding: '8px 16px' }}>Log In</button>
+          <button
+            className="btn btn-primary"
+            style={{ width: 'auto', padding: '8px 20px' }}
+            onClick={() => { login('renter'); navigate('/renter/dashboard'); }}
+          >
+            <LogIn size={16} /> Log In
+          </button>
         )}
       </div>
     </nav>
