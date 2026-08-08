@@ -11,9 +11,9 @@ export default function RenterDashboard() {
   const rating = data.userRating;
 
   const statCards = [
-    { icon: <Map size={28} color="var(--primary)" />, label: 'Past Trips', value: tripCount, route: '/renter/trips', color: '#E6F9EE' },
-    { icon: <Bookmark size={28} color="#8B5CF6" />, label: 'Saved Bikes', value: savedCount, route: '/renter/saved', color: '#EDE9FE' },
-    { icon: <Star size={28} color="#F59E0B" />, label: 'Your Rating', value: `${rating}★`, route: '/renter/ratings', color: '#FEF3C7' },
+    { icon: <Map size={24} color="var(--primary)" />, label: 'Past Trips', value: tripCount, route: '/renter/trips', bg: 'white' },
+    { icon: <Bookmark size={24} color="#8B5CF6" />, label: 'Saved Bikes', value: savedCount, route: '/renter/saved', bg: 'white' },
+    { icon: <Star size={24} color="#F59E0B" />, label: 'Your Rating', value: `${rating}★`, route: '/renter/ratings', bg: 'white' },
   ];
 
   return (
@@ -35,34 +35,36 @@ export default function RenterDashboard() {
         <div style={{ marginBottom: 32 }}>
           {activeRentals.map((rental, idx) => (
             <div key={idx} style={{
-              background: 'linear-gradient(135deg, #004d23, #00B14F)',
+              background: 'white',
+              border: '2px solid var(--primary)',
               borderRadius: 16,
               padding: '24px 28px',
-              color: 'white',
+              color: 'var(--text-main)',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              boxShadow: 'var(--shadow-sm)'
             }}>
               <div className="flex items-center gap-4">
                 <img src={rental.image} alt={rental.vehicleName} style={{ width: 100, height: 70, objectFit: 'cover', borderRadius: 10 }} />
                 <div>
-                  <div style={{ fontSize: 12, opacity: 0.75, fontWeight: 600, marginBottom: 4 }}>ACTIVE RIDE</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4, color: 'white' }}>{rental.vehicleName}</div>
-                  <div style={{ fontSize: 15, opacity: 0.9, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Clock size={15} /> Time Remaining: <strong>1h 45m</strong>
+                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 700, marginBottom: 4 }}>● ACTIVE RIDE</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>{rental.vehicleName}</div>
+                  <div style={{ fontSize: 15, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Clock size={15} color="var(--error)" /> <span style={{ color: 'var(--error)' }}>Time Remaining: <strong>1h 45m</strong></span>
                   </div>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button
                   onClick={() => navigate('/passenger/search')}
-                  style={{ background: 'white', color: 'var(--primary)', padding: '10px 18px', borderRadius: 10, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  style={{ background: 'var(--primary)', color: 'white', padding: '10px 18px', borderRadius: 10, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                 >
                   <Users size={16} /> Find Passengers
                 </button>
                 <button
                   onClick={() => navigate('/chat')}
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', padding: '10px 18px', borderRadius: 10, fontWeight: 600, border: '1.5px solid rgba(255,255,255,0.5)', cursor: 'pointer' }}
+                  style={{ background: 'white', color: 'var(--text-main)', padding: '10px 18px', borderRadius: 10, fontWeight: 600, border: '1.5px solid var(--border-color)', cursor: 'pointer' }}
                 >
                   Message Owner
                 </button>
@@ -101,7 +103,7 @@ export default function RenterDashboard() {
             key={card.label}
             onClick={() => navigate(card.route)}
             style={{
-              background: card.color,
+              background: card.bg,
               border: '1px solid var(--border-color)',
               borderRadius: 16,
               padding: '24px 20px',
@@ -110,9 +112,10 @@ export default function RenterDashboard() {
               alignItems: 'center',
               gap: 16,
               transition: 'transform 0.2s, box-shadow 0.2s',
+              boxShadow: 'var(--shadow-sm)'
             }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
           >
             {card.icon}
             <div>

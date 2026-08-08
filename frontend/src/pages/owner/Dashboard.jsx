@@ -14,43 +14,43 @@ export default function OwnerDashboard() {
 
   const statCards = [
     {
-      icon: <Bell size={28} color="white" />,
+      icon: <Bell size={24} color={pendingRequests.length > 0 ? "var(--error)" : "var(--text-muted)"} />,
       label: 'Pending Requests',
       value: pendingRequests.length,
       route: '/owner/requests',
-      bg: pendingRequests.length > 0 ? 'linear-gradient(135deg, #EF4444, #DC2626)' : 'linear-gradient(135deg, #6B7280, #4B5563)',
+      bg: 'white',
       badge: pendingRequests.length > 0 ? 'Action needed' : 'All clear'
     },
     {
-      icon: <Wallet size={28} color="white" />,
+      icon: <Wallet size={24} color="var(--primary)" />,
       label: 'Total Earnings',
       value: `৳${data.totalEarnings}`,
       route: '/owner/earnings',
-      bg: 'linear-gradient(135deg, #00B14F, #009E45)',
+      bg: 'white',
       badge: 'View details'
     },
     {
-      icon: <Bike size={28} color="white" />,
+      icon: <Bike size={24} color={activeScooters.length > 0 ? "#3B82F6" : "var(--text-muted)"} />,
       label: 'Active Now',
       value: activeScooters.length,
       route: null,
-      bg: activeScooters.length > 0 ? 'linear-gradient(135deg, #3B82F6, #2563EB)' : 'linear-gradient(135deg, #9CA3AF, #6B7280)',
+      bg: 'white',
       badge: activeScooters.length > 0 ? 'On the road' : 'All parked'
     },
     {
-      icon: <Bike size={28} color="white" />,
+      icon: <Bike size={24} color="#8B5CF6" />,
       label: 'Listed Bikes',
       value: myListings.length,
       route: '/owner/create',
-      bg: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+      bg: 'white',
       badge: 'Add more'
     },
     {
-      icon: <Star size={28} color="white" />,
+      icon: <Star size={24} color="#F59E0B" />,
       label: 'Avg Rating',
       value: `${data.userRating}★`,
       route: '/owner/ratings',
-      bg: 'linear-gradient(135deg, #F59E0B, #D97706)',
+      bg: 'white',
       badge: 'See reviews'
     },
   ];
@@ -79,22 +79,22 @@ export default function OwnerDashboard() {
               background: card.bg,
               borderRadius: 16,
               padding: '24px 20px',
+              border: '1px solid var(--border-color)',
               cursor: card.route ? 'pointer' : 'default',
-              color: 'white',
+              color: 'var(--text-main)',
               transition: 'transform 0.2s, box-shadow 0.2s',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-sm)'
             }}
-            onMouseEnter={e => { if (card.route) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)'; } }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+            onMouseEnter={e => { if (card.route) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
           >
-            {/* Background decoration */}
-            <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
             {card.icon}
             <div style={{ marginTop: 12, fontSize: 30, fontWeight: 900 }}>{card.value}</div>
-            <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>{card.label}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{card.label}</div>
             {card.route && (
-              <div style={{ fontSize: 11, opacity: 0.7, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
                 {card.badge} <ChevronRight size={12} />
               </div>
             )}

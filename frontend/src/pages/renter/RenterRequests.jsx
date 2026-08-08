@@ -6,7 +6,7 @@ import { ChevronLeft, MapPin, Navigation, CheckCircle, XCircle, Phone, MessageCi
 export default function RenterRequests() {
   const { renterBookingRequests, data, activeRentals, acceptPassengerRide, makeCounterOffer } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState('sent'); // 'sent' | 'passengers'
+  const [tab, setTab] = useState('sent'); // 'sent' | 'passengers' | 'past'
   const [counterAmounts, setCounterAmounts] = useState({});
 
   const activeReqs = renterBookingRequests.filter(r => r.status === 'active');
@@ -17,6 +17,13 @@ export default function RenterRequests() {
 
   const sentCount = renterBookingRequests.length;
   const receivedCount = passReqs.length;
+  
+  // Combine past requests for display
+  const pastSent = renterBookingRequests.filter(r => r.status === 'completed').map(r => ({ ...r, type: 'sent', displayStatus: 'accepted' }));
+  const pastReceived = (data.pastTrips || []).map(t => ({ ...t, type: 'received', displayStatus: 'accepted' }));
+  // Add a dummy rejected request to show the UI
+  const dummyRejected = { id: 'dummy_rej', type: 'received', displayStatus: 'rejected', passengerName: 'Kamal', passengerAvatar: 'https://i.pravatar.cc/150?u=kamal', pickup: 'Banani', dropoff: 'Gulshan', estimatedFare: 150 };
+  const allPastRequests = [...pastSent, ...pastReceived, dummyRejected];
 
   const handleAcceptPassenger = (rideId) => {
     acceptPassengerRide(rideId);
@@ -36,7 +43,7 @@ export default function RenterRequests() {
       <p className="text-muted" style={{ marginBottom: 28 }}>Manage your bike bookings and incoming passenger requests.</p>
 
       {/* Status Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 32 }}>
         <div
           onClick={() => setTab('sent')}
           style={{
@@ -64,6 +71,20 @@ export default function RenterRequests() {
         >
           <div style={{ fontSize: 32, fontWeight: 900, color: tab === 'passengers' ? 'white' : '#92400E', marginBottom: 4 }}>{receivedCount}</div>
           <div style={{ fontWeight: 600, color: tab === 'passengers' ? 'white' : '#92400E', opacity: 0.9 }}>Received requests</div>
+        </div>
+        <div
+          onClick={() => setTab('past')}
+          style={{
+            background: tab === 'past' ? '#10B981' : '#D1FAE5',
+            border: `2px solid #10B981`,
+            borderRadius: 14,
+            padding: '20px 24px',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+        >
+          <div style={{ fontSize: 32, fontWeight: 900, color: tab === 'past' ? 'white' : '#065F46', marginBottom: 4 }}>{allPastRequests.length}</div>
+          <div style={{ fontWeight: 600, color: tab === 'past' ? 'white' : '#065F46', opacity: 0.9 }}>Past requests</div>
         </div>
       </div>
 
@@ -217,6 +238,59 @@ export default function RenterRequests() {
                         >
                           Send
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* === PAST REQUESTS TAB === */}
+      {tab === 'past' && (
+        <div>
+          <h3 style={{ marginBottom: 20 }}>Past requests</h3>
+          
+          {allPastRequests.length === 0 ? (
+            <div className="empty-state">
+              <div style={{ fontSize: 56, marginBottom: 16 }}>🕒</div>
+              <h3>No past requests</h3>
+              <p>Your history of sent and received requests will appear here.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {allPastRequests.map((req, idx) => (
+                <div key={req.id || idx} style={{
+                  background: 'white',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 16,
+                  padding: '20px 24px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  boxShadow: 'var(--shadow-sm)'
+                }}>
+                  <div className="flex items-center gap-4">
+                    {req.type === 'sent' ? (
+                      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                        <Navigation size={24} />
+                      </div>
+                    ) : (
+                      <img src={req.passengerAvatar} alt={req.passengerName || req.owner} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2" style={{ marginBottom: 4 }}>
+                        <h4 style={{ margin: 0, fontSize: 16 }}>
+                          {req.type === 'sent' ? `Sent: ${req.vehicleName}` : `Received: ${req.passengerName || req.owner}`}
+                        </h4>
+                        <span className={req.displayStatus === 'accepted' ? 'badge badge-green' : 'badge badge-red'}>
+                          {req.displayStatus === 'accepted' ? 'Accepted' : 'Rejected'}
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted">
+                        {req.type === 'sent' ? `${req.location} · ৳${req.totalFare}` : `${req.pickup} → ${req.dropoff} · ৳${req.totalFare || req.estimatedFare}`}
                       </div>
                     </div>
                   </div>

@@ -171,46 +171,7 @@ export default function BookVehicle() {
         </div>
       </div>
 
-      {/* Section 3: Purpose */}
-      <div style={{ marginBottom: 36 }}>
-        <div className="text-muted font-semibold text-sm" style={{ marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Purpose</div>
-        <div className="card" style={{ padding: '20px 24px' }}>
-          <div className="text-sm font-semibold" style={{ marginBottom: 16 }}>Select purpose of renting</div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {[
-              { id: 'personal', label: 'Personal use only' },
-              { id: 'ridesharing', label: 'Ride sharing only' },
-              { id: 'both', label: 'Both' },
-            ].map(opt => (
-              <button
-                key={opt.id}
-                onClick={() => setPurpose(opt.id)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: 10,
-                  fontWeight: 600,
-                  fontSize: 14,
-                  border: `2px solid ${purpose === opt.id ? 'var(--primary)' : 'var(--border-color)'}`,
-                  background: purpose === opt.id ? 'var(--primary-light)' : 'var(--surface)',
-                  color: purpose === opt.id ? 'var(--primary)' : 'var(--text-muted)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                }}
-              >
-                {purpose === opt.id && <CheckCircle size={15} />}
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          {(purpose === 'ridesharing' || purpose === 'both') && (
-            <div style={{ marginTop: 16, padding: '12px 16px', background: 'var(--primary-light)', borderRadius: 8, fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>
-              ✓ You'll be able to accept passenger ride requests while you have this bike!
-            </div>
-          )}
-        </div>
-      </div>
+
 
       {/* Submit */}
       <button

@@ -118,20 +118,19 @@ export default function LandingPage() {
         maxWidth: 800,
         margin: '-36px auto 0',
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: 'repeat(2, 1fr)',
         overflow: 'hidden',
         position: 'relative',
         zIndex: 10
       }}>
         {[
           { number: `${availableBikes.length}+`, label: 'Bikes Available Now' },
-          { number: '4.8★', label: 'Average Owner Rating' },
           { number: '৳120', label: 'Avg. Rate / Hour' }
         ].map((stat, i) => (
           <div key={i} style={{
             padding: '24px',
             textAlign: 'center',
-            borderRight: i < 2 ? '1px solid var(--border-color)' : 'none'
+            borderRight: i < 1 ? '1px solid var(--border-color)' : 'none'
           }}>
             <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--primary)', marginBottom: 4 }}>{stat.number}</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>{stat.label}</div>
