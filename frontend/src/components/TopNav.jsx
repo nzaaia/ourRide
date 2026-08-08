@@ -16,6 +16,7 @@ export default function TopNav() {
     ],
     renter: [
       { to: '/renter/dashboard', label: 'Dashboard' },
+      { to: '/renter/requests', label: 'Requests' },
       { to: '/renter/browse', label: 'Browse Bikes' },
     ],
     passenger: [

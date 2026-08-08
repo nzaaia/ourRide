@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [data, setData] = useState(initialMockData);
   const [activeRentals, setActiveRentals] = useState([]);
+  const [renterBookingRequests, setRenterBookingRequests] = useState([]); // Requests the renter has sent to book bikes
   const [activePassengerRides, setActivePassengerRides] = useState([]);
   const [messages, setMessages] = useState([]);
 
@@ -56,10 +57,18 @@ export const AuthProvider = ({ children }) => {
   });
 
   // === Rentals ===
-  const startRental = (bike, hours) => {
+  const addRenterBookingRequest = (req) => {
+    setRenterBookingRequests(prev => [req, ...prev]);
+  };
+
+  const updateRenterBookingStatus = (reqId, status) => {
+    setRenterBookingRequests(prev => prev.map(r => r.id === reqId ? { ...r, status } : r));
+  };
+
+  const startRental = (bike, hours, purpose = 'personal') => {
     const endTime = new Date();
     endTime.setHours(endTime.getHours() + hours);
-    setActiveRentals(prev => [...prev, { ...bike, endTime, bookedHours: hours }]);
+    setActiveRentals(prev => [...prev, { ...bike, endTime, bookedHours: hours, purpose }]);
     updateListing(bike.id, { status: 'active', isAvailable: false });
   };
 
@@ -122,9 +131,11 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       isAuthenticated, role, user, data,
       activeRentals, activePassengerRides, messages,
+      renterBookingRequests,
       toggleRole, logout, login,
       addListing, updateListing,
       addBookingRequest, updateBookingStatus,
+      addRenterBookingRequest, updateRenterBookingStatus,
       toggleSavedBike,
       startRental, endRental,
       submitRideRequest, makeCounterOffer, acceptPassengerRide,

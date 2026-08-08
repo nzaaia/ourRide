@@ -69,42 +69,42 @@ export default function LandingPage() {
               <Bike size={22} /> Book a Vehicle
             </button>
             <button
-              onClick={goRide}
-              style={{
-                background: 'rgba(255,255,255,0.15)',
-                color: 'white',
-                padding: '16px 32px',
-                borderRadius: 12,
-                fontWeight: 700,
-                fontSize: 17,
-                border: '2px solid rgba(255,255,255,0.5)',
-                display: 'flex', alignItems: 'center', gap: 10,
-                cursor: 'pointer',
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-            >
-              <MapPin size={22} /> Look for a Ride
-            </button>
-            <button
               onClick={goList}
               style={{
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.18)',
                 color: 'white',
                 padding: '16px 32px',
                 borderRadius: 12,
                 fontWeight: 700,
                 fontSize: 17,
-                border: '2px solid rgba(255,255,255,0.3)',
+                border: '2px solid rgba(255,255,255,0.55)',
                 display: 'flex', alignItems: 'center', gap: 10,
                 cursor: 'pointer',
                 transition: 'background 0.2s'
               }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.28)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.18)'}
             >
               💰 List & Start Earning
+            </button>
+            <button
+              onClick={goRide}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                color: 'white',
+                padding: '16px 32px',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 17,
+                border: '2px solid rgba(255,255,255,0.25)',
+                display: 'flex', alignItems: 'center', gap: 10,
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.16)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            >
+              <MapPin size={22} /> Look for a Ride
             </button>
           </div>
         </div>

@@ -20,6 +20,7 @@ import BookVehicle from './pages/renter/BookVehicle';
 import PastTrips from './pages/renter/PastTrips';
 import SavedBikes from './pages/renter/SavedBikes';
 import MyRatings from './pages/renter/MyRatings';
+import RenterRequests from './pages/renter/RenterRequests';
 
 // Passenger Pages
 import RideSearch from './pages/passenger/RideSearch';
@@ -67,6 +68,7 @@ function App() {
           <Route path="/renter/trips" element={protectedEl(<PastTrips />)} />
           <Route path="/renter/saved" element={protectedEl(<SavedBikes />)} />
           <Route path="/renter/ratings" element={protectedEl(<MyRatings />)} />
+          <Route path="/renter/requests" element={protectedEl(<RenterRequests />)} />
         </Routes>
       </div>
     </>
