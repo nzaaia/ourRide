@@ -6,7 +6,7 @@ import { ChevronLeft, Phone, Star, Clock, User, CheckCircle } from 'lucide-react
 export default function BookVehicle() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, user, startRental, addRenterBookingRequest, login, isAuthenticated } = useAuth();
+  const { data, user, addBookingRequest, addRenterBookingRequest, login, isAuthenticated } = useAuth();
 
   const vehicle = data.listings.find(v => v.id === id);
 
@@ -26,9 +26,29 @@ export default function BookVehicle() {
       login('renter');
     }
 
-    // Record the renter's booking request
+    const sharedId = `req_${Date.now()}`;
+
+    // Owner-side incoming request
+    const ownerReq = {
+      id: sharedId,
+      vehicleId: vehicle.id,
+      renterName: user?.name || 'Nazia Putul',
+      renterAvatar: user?.avatar || 'https://i.pravatar.cc/150?u=nazia',
+      renterRating: 4.8,
+      renterPastRides: 24,
+      renterPhone: user?.phone || '01712345678',
+      renterNid: user?.nid || '9876543210123',
+      pickupLocation: vehicle.location,
+      estimatedDuration: hours,
+      estimatedFare: totalFare,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    // Renter-side record
     const bookingReq = {
       id: `bk_${Date.now()}`,
+      requestId: sharedId, // links to owner's incomingRequests
       vehicleId: vehicle.id,
       vehicleName: vehicle.vehicleName,
       vehicleImage: vehicle.image,
@@ -36,18 +56,20 @@ export default function BookVehicle() {
       ownerAvatar: vehicle.ownerAvatar,
       ownerPhone: '+880 1711-123456',
       location: vehicle.location,
+      exactLocation: vehicle.exactLocation, // hidden until accepted
       selectedDay,
       selectedTime,
       hours,
       purpose,
       totalFare,
-      status: 'active', // active, completed
+      status: 'pending', // pending → accepted → in_use → returning → completed
+      bikeStatus: 'at_garage',
       startedAt: new Date().toISOString(),
       canFindPassengers: purpose === 'ridesharing' || purpose === 'both'
     };
 
+    addBookingRequest(ownerReq);
     addRenterBookingRequest(bookingReq);
-    startRental(vehicle, hours, purpose);
     setBooked(true);
   };
 
@@ -55,9 +77,9 @@ export default function BookVehicle() {
     return (
       <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center', paddingTop: 60 }}>
         <div style={{ fontSize: 72, marginBottom: 24 }}>🎉</div>
-        <h2 style={{ marginBottom: 12 }}>Booking Confirmed!</h2>
+        <h2 style={{ marginBottom: 12 }}>Request Sent!</h2>
         <p className="text-muted" style={{ marginBottom: 32 }}>
-          Your booking for <strong>{vehicle.vehicleName}</strong> is now active. Go to your dashboard to manage it.
+          Your booking request for <strong>{vehicle.vehicleName}</strong> has been sent to the owner. Once they accept, the exact bike location will be revealed to you and you'll have 20 minutes to arrive.
         </p>
         <div className="card" style={{ marginBottom: 24, textAlign: 'left' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

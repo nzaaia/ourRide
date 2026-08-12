@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, LogOut, ChevronDown } from 'lucide-react';
+import { LogIn, LogOut, ChevronDown, User, Wallet, Star } from 'lucide-react';
 import { useState } from 'react';
 
 export default function TopNav() {
@@ -12,12 +12,14 @@ export default function TopNav() {
     owner: [
       { to: '/owner/dashboard', label: 'Dashboard' },
       { to: '/owner/requests', label: 'Requests' },
+      { to: '/owner/bikes', label: 'My Bikes' },
       { to: '/owner/earnings', label: 'Earnings' },
     ],
     renter: [
       { to: '/renter/dashboard', label: 'Dashboard' },
       { to: '/renter/requests', label: 'Requests' },
       { to: '/renter/browse', label: 'Browse Bikes' },
+      { to: '/renter/earnings', label: 'Earnings' },
     ],
     passenger: [
       { to: '/passenger/search', label: 'Find a Ride' },
@@ -134,18 +136,70 @@ export default function TopNav() {
               <div style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: 8,
                 background: 'white', border: '1px solid var(--border-color)',
-                borderRadius: 12, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', minWidth: 180, zIndex: 100
+                borderRadius: 14, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', minWidth: 200, zIndex: 100
               }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)' }}>
-                  <div className="font-semibold" style={{ marginBottom: 2 }}>{user.name}</div>
-                  <div className="text-muted text-sm">{user.email}</div>
+                {/* User info */}
+                <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <img src={user.avatar} alt={user.name} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{user.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{user.email}</div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Profile */}
+                <button
+                  onClick={() => { navigate('/profile'); setShowUserMenu(false); }}
+                  style={{
+                    width: '100%', padding: '11px 18px', textAlign: 'left',
+                    fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 10,
+                    cursor: 'pointer', border: 'none', background: 'none', fontSize: 14,
+                    borderBottom: '1px solid var(--border-color)'
+                  }}
+                >
+                  <User size={16} color="var(--text-muted)" /> My Profile
+                </button>
+
+                {/* Earnings (owner only) */}
+                {role === 'owner' && (
+                  <button
+                    onClick={() => { navigate('/owner/earnings'); setShowUserMenu(false); }}
+                    style={{
+                      width: '100%', padding: '11px 18px', textAlign: 'left',
+                      fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 10,
+                      cursor: 'pointer', border: 'none', background: 'none', fontSize: 14,
+                      borderBottom: '1px solid var(--border-color)'
+                    }}
+                  >
+                    <Wallet size={16} color="var(--text-muted)" /> Earnings
+                  </button>
+                )}
+
+                {/* Ratings */}
+                <button
+                  onClick={() => {
+                    navigate(role === 'owner' ? '/owner/ratings' : '/renter/ratings');
+                    setShowUserMenu(false);
+                  }}
+                  style={{
+                    width: '100%', padding: '11px 18px', textAlign: 'left',
+                    fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 10,
+                    cursor: 'pointer', border: 'none', background: 'none', fontSize: 14,
+                    borderBottom: '1px solid var(--border-color)'
+                  }}
+                >
+                  <Star size={16} color="var(--text-muted)" /> Ratings
+                </button>
+
+                {/* Logout */}
                 <button
                   onClick={() => { logout(); navigate('/'); setShowUserMenu(false); }}
                   style={{
-                    width: '100%', padding: '12px 20px', textAlign: 'left',
+                    width: '100%', padding: '11px 18px', textAlign: 'left',
                     fontWeight: 600, color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 10,
-                    cursor: 'pointer', border: 'none', background: 'none', fontSize: 15
+                    cursor: 'pointer', border: 'none', background: 'none', fontSize: 14
                   }}
                 >
                   <LogOut size={16} /> Log Out
