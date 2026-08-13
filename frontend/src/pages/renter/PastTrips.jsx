@@ -45,7 +45,10 @@ export default function PastTrips() {
               <div className="text-right">
                 <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)', marginBottom: 8 }}>৳{trip.totalFare}</div>
                 <div className="badge badge-green" style={{ fontSize: 13 }}>
-                  {'★'.repeat(trip.rating)}{'☆'.repeat(5 - trip.rating)} Your Rating
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={12} color={i < trip.rating ? '#F59E0B' : '#E5E7EB'} fill={i < trip.rating ? '#F59E0B' : '#E5E7EB'} />
+                  ))}
+                  Your Rating
                 </div>
               </div>
             </div>

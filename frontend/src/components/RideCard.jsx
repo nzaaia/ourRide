@@ -1,3 +1,5 @@
+import { Star } from 'lucide-react';
+
 export default function RideCard({ ride, onBook }) {
   return (
     <div className="card" style={{ marginBottom: 'var(--space-4)' }}>
@@ -6,7 +8,9 @@ export default function RideCard({ ride, onBook }) {
           <img src={ride.driverAvatar} alt={ride.driverName} style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
           <div>
             <h3 style={{ fontSize: '16px', margin: 0 }}>{ride.driverName}</h3>
-            <span className="text-sm font-semibold">{ride.rating} ★</span>
+            <span className="text-sm font-semibold" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              <Star size={12} color="#F59E0B" fill="#F59E0B" /> {ride.rating}
+            </span>
           </div>
         </div>
         <div className="font-bold" style={{ fontSize: '18px', color: 'var(--primary)' }}>

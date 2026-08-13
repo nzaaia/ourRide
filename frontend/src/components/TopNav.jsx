@@ -27,9 +27,9 @@ export default function TopNav() {
   };
 
   const currentLinks = isAuthenticated ? (navLinks[role] || []) : [
-    { to: '/renter/browse', label: '🏍️ Rent a Bike' },
-    { to: '/owner/dashboard', label: '💰 List & Earn' },
-    { to: '/passenger/search', label: '📍 Find a Ride' },
+    { to: '/renter/browse', label: 'Rent a Bike' },
+    { to: '/owner/dashboard', label: 'List & Earn' },
+    { to: '/passenger/search', label: 'Find a Ride' },
   ];
 
   return (

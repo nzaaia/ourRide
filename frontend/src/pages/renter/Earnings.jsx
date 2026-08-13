@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/AuthContext';
-import { Wallet, Clock } from 'lucide-react';
+import { Wallet, Clock, Bike } from 'lucide-react';
 
 export default function RenterEarnings() {
   const { data } = useAuth();
@@ -38,7 +38,9 @@ export default function RenterEarnings() {
           background: 'white', borderRadius: 16, padding: '48px', textAlign: 'center',
           border: '1px dashed var(--border-color)', color: 'var(--text-muted)'
         }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🏍️</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Bike size={36} color="var(--text-muted)" />
+          </div>
           <div style={{ fontWeight: 600 }}>No trips yet — book your first ride!</div>
         </div>
       ) : (

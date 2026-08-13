@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
-import { Camera, CheckCircle, RefreshCw, AlertTriangle, X } from 'lucide-react';
+import { Camera, CheckCircle, RefreshCw, AlertTriangle, X, Flag, Image } from 'lucide-react';
 
 /**
  * TripPhotoCapture
@@ -104,7 +104,11 @@ export default function TripPhotoCapture({ phase, onCapture, onCancel }) {
           {/* === START STEP === */}
           {step === 'start' && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 72, marginBottom: 16 }}>{isBefore ? '📸' : '🏁'}</div>
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
+                {isBefore
+                  ? <Camera size={56} color="var(--primary)" />
+                  : <Flag size={56} color="var(--primary)" />}
+              </div>
               <h3 style={{ marginBottom: 8 }}>{phaseLabel} Required</h3>
               <p className="text-muted" style={{ marginBottom: 8 }}>{phaseDesc}</p>
 
@@ -202,7 +206,9 @@ export default function TripPhotoCapture({ phase, onCapture, onCancel }) {
           {/* === DONE STEP === */}
           {step === 'done' && (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <div style={{ fontSize: 64, marginBottom: 12 }}>✅</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                <CheckCircle size={56} color={phaseColor} />
+              </div>
               <h3 style={{ color: phaseColor, marginBottom: 8 }}>Photo Submitted!</h3>
               <p className="text-muted">Your {phaseLabel.toLowerCase()} has been recorded.</p>
             </div>

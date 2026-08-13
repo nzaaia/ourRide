@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Navigation, Star, CheckCircle, ChevronLeft, DollarSign } from 'lucide-react';
+import { MapPin, Navigation, Star, CheckCircle, ChevronLeft, DollarSign, Bike, Clock, MessageCircle } from 'lucide-react';
+import PageHeader from '../../components/ui/PageHeader';
+import { useToast } from '../../components/ui/Toast';
 
 export default function RideSearch() {
   const { data, role, acceptPassengerRide, makeCounterOffer, activeRentals, isAuthenticated, login, submitRideRequest, user } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
-  
+
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
   const [searched, setSearched] = useState(false);
@@ -15,12 +18,14 @@ export default function RideSearch() {
 
   // ============= RENTER VIEW (looking to pick up passengers) =============
   if (role === 'renter') {
-    if (activeRentals.length === 0) {
+    if (activeRentals.length === 0 && !data.listings.some(l => l.ownerId === user?.id && l.status === 'active')) {
       return (
-        <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', paddingTop: 80 }}>
-          <div style={{ fontSize: 64, marginBottom: 24 }}>🏍️</div>
-          <h2>Book a bike first!</h2>
-          <p className="text-muted" style={{ marginBottom: 32 }}>You need an active rented bike before you can pick up passengers.</p>
+        <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center', paddingTop: 48 }}>
+          <div style={{ width: 64, height: 64, margin: '0 auto 16px', borderRadius: 18, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Bike size={32} color="var(--primary)" />
+          </div>
+          <h2 style={{ marginBottom: 8 }}>Book a bike first</h2>
+          <p className="text-muted" style={{ marginBottom: 28 }}>You need an active rented bike before you can pick up passengers.</p>
           <button className="btn btn-primary btn-lg" style={{ width: 'auto' }} onClick={() => navigate('/renter/browse')}>
             Browse Bikes
           </button>
@@ -30,89 +35,86 @@ export default function RideSearch() {
 
     const handleAccept = (rideId) => {
       acceptPassengerRide(rideId);
+      toast.success('Ride accepted', 'Head to the pickup point.');
       navigate('/renter/dashboard');
     };
 
     const handleCounterOffer = (rideId) => {
       const amount = counterOfferAmounts[rideId];
-      if (!amount || isNaN(amount)) return alert('Please enter a valid fare');
+      if (!amount || isNaN(amount)) { toast.error('Invalid fare', 'Enter a valid amount first.'); return; }
       makeCounterOffer(rideId, Number(amount), user.name);
-      alert(`Counter offer of ৳${amount} sent! The passenger will see it.`);
+      toast.info('Counter offer sent', `৳${amount} offer sent to the passenger.`);
     };
 
     return (
-      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-        <h2 style={{ marginBottom: 8 }}>Available Passenger Requests</h2>
-        <p className="text-muted" style={{ marginBottom: 32 }}>Accept at the requested price, or make a counter offer.</p>
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <PageHeader title="Passenger Requests" subtitle="Accept at the offered price or make a counter offer" />
 
         {data.availableRideRequests.length === 0 ? (
           <div className="empty-state">
-            <Navigation size={64} />
+            <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Navigation size={28} color="var(--primary)" />
+            </div>
             <h3>No passengers right now</h3>
             <p>Check back soon — ride requests appear here in real time.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {data.availableRideRequests.map(ride => (
-              <div key={ride.id} className="card" style={{ padding: '24px 28px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 24, alignItems: 'start', marginBottom: 20 }}>
-                  <div className="flex items-center gap-4">
-                    <img src={ride.passengerAvatar} alt={ride.passengerName} className="avatar" style={{ width: 56, height: 56 }} />
+              <div key={ride.id} className="card" style={{ padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <img src={ride.passengerAvatar} alt={ride.passengerName} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
                     <div>
-                      <div className="font-bold text-lg" style={{ marginBottom: 2 }}>{ride.passengerName}</div>
-                      <div className="stars text-sm">★ {ride.passengerRating} rating</div>
-                      <div className="text-muted text-sm">{ride.time}</div>
+                      <div className="font-bold" style={{ fontSize: 15 }}>{ride.passengerName}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#F59E0B', fontWeight: 600 }}>
+                        <Star size={11} fill="#F59E0B" /> {ride.passengerRating} · {ride.time}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--primary)' }}>৳{ride.estimatedFare}</div>
-                    <div className="text-muted text-sm">passenger's offer</div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>৳{ride.estimatedFare}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>passenger's offer</div>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: '16px 0', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', marginBottom: 20 }}>
-                  <div className="flex gap-3">
-                    <MapPin size={20} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 2 }} />
-                    <div>
-                      <div className="text-xs text-muted font-semibold" style={{ textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>PICKUP</div>
-                      <div className="font-semibold">{ride.pickup}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px', background: 'var(--bg-color)', borderRadius: 12, marginBottom: 14 }}>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <MapPin size={15} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>PICKUP</div>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{ride.pickup}</div>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <Navigation size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
-                    <div>
-                      <div className="text-xs text-muted font-semibold" style={{ textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>DROPOFF</div>
-                      <div className="font-semibold">{ride.dropoff}</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <Navigation size={15} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>DROPOFF</div>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{ride.dropoff}</div>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-                  <button
-                    className="btn btn-primary"
-                    style={{ flex: 1 }}
-                    onClick={() => handleAccept(ride.id)}
-                  >
-                    <CheckCircle size={18} /> Accept ৳{ride.estimatedFare}
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+                  <button className="btn btn-primary" style={{ flex: 1.4 }} onClick={() => handleAccept(ride.id)}>
+                    <CheckCircle size={16} /> Accept ৳{ride.estimatedFare}
                   </button>
-
-                  <div style={{ flex: 1, display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
-                      <div className="text-xs text-muted font-semibold" style={{ marginBottom: 4 }}>Counter Offer (৳)</div>
-                      <input
-                        type="number"
-                        className="input"
-                        placeholder={`e.g. ${ride.estimatedFare - 30}`}
-                        value={counterOfferAmounts[ride.id] || ''}
-                        onChange={e => setCounterOfferAmounts(prev => ({ ...prev, [ride.id]: e.target.value }))}
-                      />
-                    </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4 }}>Counter offer (৳)</div>
+                    <input
+                      type="number"
+                      className="input"
+                      placeholder={`e.g. ${ride.estimatedFare - 30}`}
+                      value={counterOfferAmounts[ride.id] || ''}
+                      onChange={e => setCounterOfferAmounts(prev => ({ ...prev, [ride.id]: e.target.value }))}
+                      style={{ fontSize: 14 }}
+                    />
                     <button
                       className="btn btn-outline"
-                      style={{ width: 'auto', marginTop: 18 }}
+                      style={{ width: '100%', marginTop: 6, minHeight: 34 }}
                       onClick={() => handleCounterOffer(ride.id)}
                     >
-                      Send
+                      Send offer
                     </button>
                   </div>
                 </div>
@@ -128,48 +130,51 @@ export default function RideSearch() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (!pickup || !dropoff) return;
+    if (!isAuthenticated) login('passenger');
     const id = submitRideRequest(pickup, dropoff, 200);
     setMyRideId(id);
     setSearched(true);
+    toast.success('Ride request posted', 'Riders near you can now accept or counter.');
   };
 
   const myRequest = data.availableRideRequests.find(r => r.id === myRideId);
 
   if (searched && myRequest) {
     return (
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        <div className="flex items-center gap-4" style={{ marginBottom: 32 }}>
-          <button onClick={() => { setSearched(false); setMyRideId(null); }} className="btn btn-outline btn-sm" style={{ width: 'auto' }}>
-            <ChevronLeft size={18} /> Back
-          </button>
-          <h2 style={{ marginBottom: 0 }}>Ride Request Sent</h2>
-        </div>
+      <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <PageHeader
+          title="Ride Request Sent"
+          back={() => { setSearched(false); setMyRideId(null); }}
+        />
 
-        <div className="card" style={{ padding: '28px 32px', marginBottom: 24 }}>
-          <div className="badge badge-blue" style={{ marginBottom: 20, fontSize: 13 }}>⏳ Waiting for a rider to accept...</div>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <div style={{ flex: 1 }}>
-              <div className="text-xs text-muted font-semibold" style={{ marginBottom: 4 }}>FROM</div>
+        <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <Clock size={16} color="var(--info)" />
+            <span className="badge badge-blue">Waiting for a rider to accept</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <div className="text-muted text-sm" style={{ marginBottom: 2 }}>FROM</div>
               <div className="font-bold">{pickup}</div>
             </div>
-            <div style={{ flex: 1 }}>
-              <div className="text-xs text-muted font-semibold" style={{ marginBottom: 4 }}>TO</div>
+            <div>
+              <div className="text-muted text-sm" style={{ marginBottom: 2 }}>TO</div>
               <div className="font-bold">{dropoff}</div>
             </div>
           </div>
-          <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span className="text-muted">Your offered fare</span>
-            <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary)' }}>৳200</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>৳200</span>
           </div>
         </div>
 
         {myRequest.counterOffer && (
-          <div className="card" style={{ border: '2px solid var(--warning)', padding: '24px 28px', marginBottom: 24 }}>
-            <div className="badge badge-yellow" style={{ marginBottom: 16 }}>💬 Counter Offer Received!</div>
+          <div className="card" style={{ border: '2px solid var(--warning)', padding: 20, marginBottom: 16 }}>
+            <div className="badge badge-yellow" style={{ marginBottom: 12 }}>Counter offer received</div>
             <div className="font-semibold" style={{ marginBottom: 8 }}>{myRequest.counterOffer.renterName} offers:</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--warning)', marginBottom: 20 }}>৳{myRequest.counterOffer.fare}</div>
-            <div className="flex gap-3">
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { acceptPassengerRide(myRideId); navigate('/passenger/search'); setSearched(false); }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--warning)', marginBottom: 16 }}>৳{myRequest.counterOffer.fare}</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { acceptPassengerRide(myRideId); toast.success('Offer accepted', 'Enjoy your ride!'); navigate('/passenger/search'); }}>
                 Accept Offer
               </button>
               <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setMyRideId(null)}>
@@ -179,9 +184,9 @@ export default function RideSearch() {
           </div>
         )}
 
-        <div className="card" style={{ padding: '20px 24px', backgroundColor: 'var(--bg-color)', border: 'none' }}>
+        <div className="card" style={{ padding: '16px 20px', background: 'var(--bg-color)', border: 'none' }}>
           <p className="text-muted text-sm" style={{ marginBottom: 0 }}>
-            Your request is now visible to renters who have active bikes. They can accept your price or make a counter offer. You'll see it here as soon as a rider responds.
+            Your request is now visible to renters with active bikes. They can accept your price or make a counter offer.
           </p>
         </div>
       </div>
@@ -189,19 +194,15 @@ export default function RideSearch() {
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto' }}>
-      <h2 style={{ marginBottom: 8 }}>Where do you want to go?</h2>
-      <p className="text-muted" style={{ marginBottom: 32 }}>Enter your pickup and drop-off points. We'll connect you with a renter who has a bike.</p>
+    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+      <PageHeader title="Where to?" subtitle="Enter pickup and drop-off — we'll connect you with a rider" />
 
-      <div className="card" style={{ padding: '32px' }}>
+      <div className="card" style={{ padding: 20 }}>
         <form onSubmit={handleSearch}>
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 16 }}>
             <label className="font-semibold text-sm" style={{ display: 'block', marginBottom: 8 }}>Pickup Location</label>
-            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid var(--border-color)', borderRadius: 10, padding: '12px 16px', gap: 12, transition: 'border-color 0.2s' }}
-              onFocusCapture={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-              onBlurCapture={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
-            >
-              <MapPin size={20} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid var(--border-color)', borderRadius: 12, padding: '12px 14px', gap: 10 }}>
+              <MapPin size={18} color="var(--text-muted)" style={{ flexShrink: 0 }} />
               <input
                 required
                 type="text"
@@ -213,13 +214,10 @@ export default function RideSearch() {
             </div>
           </div>
 
-          <div style={{ marginBottom: 32 }}>
+          <div style={{ marginBottom: 20 }}>
             <label className="font-semibold text-sm" style={{ display: 'block', marginBottom: 8 }}>Drop-off Location</label>
-            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid var(--border-color)', borderRadius: 10, padding: '12px 16px', gap: 12, transition: 'border-color 0.2s' }}
-              onFocusCapture={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-              onBlurCapture={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
-            >
-              <Navigation size={20} color="var(--primary)" style={{ flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid var(--border-color)', borderRadius: 12, padding: '12px 14px', gap: 10 }}>
+              <Navigation size={18} color="var(--primary)" style={{ flexShrink: 0 }} />
               <input
                 required
                 type="text"
@@ -231,20 +229,21 @@ export default function RideSearch() {
             </div>
           </div>
 
-          <div style={{ background: 'var(--bg-color)', borderRadius: 10, padding: '16px 20px', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="text-muted font-semibold">Estimated Fare</span>
-            <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary)' }}>৳150 – ৳250</span>
+          <div style={{ background: 'var(--bg-color)', borderRadius: 10, padding: '14px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="text-muted font-semibold">Estimated fare</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>৳150 – ৳250</span>
           </div>
 
           <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>
-            Post Ride Request
+            <DollarSign size={17} /> Post Ride Request
           </button>
         </form>
       </div>
 
-      <div className="card" style={{ padding: '20px 24px', marginTop: 16, backgroundColor: 'transparent', border: 'none' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '16px 4px' }}>
+        <MessageCircle size={16} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
         <p className="text-muted text-sm" style={{ marginBottom: 0 }}>
-          💡 After you post, renters who currently have bikes will see your request. They can accept at your price or make a counter offer.
+          After you post, renters with active bikes will see your request. They can accept at your price or make a counter offer.
         </p>
       </div>
     </div>

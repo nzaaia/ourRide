@@ -1,0 +1,6 @@
+.superpowers/
+node_modules/
+.env
+.env.*
+!.env.example
+backend/__pycache__/

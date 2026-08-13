@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import TopNav from './components/TopNav';
+import DesktopNav from './components/DesktopNav';
+import BottomNav from './components/BottomNav';
+import InstallPrompt from './components/InstallPrompt';
 
 // Public Pages
 import LandingPage from './pages/LandingPage';
@@ -38,10 +40,14 @@ function App() {
 
   const protectedEl = (el) => isAuthenticated ? el : <Navigate to="/" />;
 
+  const contentClass = !isAuthenticated
+    ? 'main-content full-width-page no-bottom-nav'
+    : 'main-content';
+
   return (
     <>
-      <TopNav />
-      <div className="main-content">
+      <DesktopNav />
+      <div className={contentClass}>
         <Routes>
           <Route path="/" element={
             !isAuthenticated ? <LandingPage /> :
@@ -77,6 +83,8 @@ function App() {
           <Route path="/renter/earnings" element={protectedEl(<RenterEarnings />)} />
         </Routes>
       </div>
+      <BottomNav />
+      <InstallPrompt />
     </>
   );
 }

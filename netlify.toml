@@ -1,0 +1,14 @@
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA routing: serve index.html for any path so deep links and
+# hard refreshes never 404 (real files like /sw.js are served first).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

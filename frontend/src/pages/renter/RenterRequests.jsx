@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
-  ChevronLeft, MapPin, Navigation, CheckCircle, XCircle,
-  Phone, MessageCircle, Clock, AlertTriangle, Camera, DollarSign
+  MapPin, Navigation, CheckCircle2, Phone, MessageCircle,
+  Clock, AlertTriangle, Camera, DollarSign, Bike, Star
 } from 'lucide-react';
 import TripPhotoCapture from './TripPhotoCapture';
+import PageHeader from '../../components/ui/PageHeader';
+import { useToast } from '../../components/ui/Toast';
 
 // Countdown timer hook
 function useCountdown(startIso, limitMinutes = 20) {
@@ -31,14 +33,21 @@ function useCountdown(startIso, limitMinutes = 20) {
 
 function AcceptedBikeCard({ req }) {
   const { submitBeforePhoto, submitAfterPhoto, completeTrip } = useAuth();
+  const toast = useToast();
   const countdown = useCountdown(req.acceptedAt, 20);
-  const [photoPhase, setPhotoPhase] = useState(null); // 'before' | 'after' | null
+  const [photoPhase, setPhotoPhase] = useState(null);
 
-  const bikeStatus = req.bikeStatus || 'accepted'; // accepted → in_use → returning → completed
+  const bikeStatus = req.bikeStatus || 'accepted';
 
   const locationLines = req.exactLocation
     ? [req.exactLocation.address, `${req.exactLocation.lat}°N, ${req.exactLocation.lng}°E`]
     : [req.location || req.pickupLocation || 'Location pending'];
+
+  const statusMeta = {
+    accepted: { icon: <CheckCircle2 size={18} color="#3B82F6" />, label: 'ACCEPTED', color: '#3B82F6' },
+    in_use: { icon: <Bike size={18} color="var(--primary)" />, label: 'ACTIVE RIDE', color: 'var(--primary)' },
+    returning: { icon: <DollarSign size={18} color="#F59E0B" />, label: 'RETURNING', color: '#F59E0B' },
+  }[bikeStatus] || { icon: null, label: bikeStatus.toUpperCase(), color: 'var(--text-muted)' };
 
   return (
     <>
@@ -48,6 +57,7 @@ function AcceptedBikeCard({ req }) {
           onCapture={(dataUrl) => {
             if (photoPhase === 'before') submitBeforePhoto(req.requestId || req.id, dataUrl);
             else submitAfterPhoto(req.requestId || req.id, dataUrl);
+            toast.success(photoPhase === 'before' ? 'Trip started' : 'After photo saved', photoPhase === 'before' ? 'Ride is now active.' : 'Confirm payment to complete.');
             setPhotoPhase(null);
           }}
           onCancel={() => setPhotoPhase(null)}
@@ -56,36 +66,38 @@ function AcceptedBikeCard({ req }) {
 
       <div style={{
         background: 'white',
-        border: `2px solid ${bikeStatus === 'in_use' ? 'var(--primary)' : bikeStatus === 'returning' ? '#F59E0B' : '#3B82F6'}`,
-        borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-sm)'
+        border: `2px solid ${statusMeta.color}`,
+        borderRadius: 18, overflow: 'hidden', boxShadow: 'var(--shadow-sm)', marginBottom: 16
       }}>
-        {/* Image */}
+        {/* Image header */}
         <div style={{ position: 'relative' }}>
-          <img src={req.vehicleImage} alt={req.vehicleName} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
-          <div style={{ position: 'absolute', bottom: 12, left: 16 }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 700, marginBottom: 2 }}>
-              {bikeStatus === 'in_use' ? '● ACTIVE RIDE' : bikeStatus === 'returning' ? '↩ RETURNING' : '✓ ACCEPTED'}
-            </div>
-            <h4 style={{ color: 'white', margin: 0 }}>{req.vehicleName}</h4>
+          <img src={req.vehicleImage} alt={req.vehicleName} style={{ width: '100%', height: 150, objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)' }} />
+          <div style={{ position: 'absolute', bottom: 12, left: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700 }}>
+              {statusMeta.icon} {statusMeta.label}
+            </span>
+            <h4 style={{ color: 'white', margin: 0, fontSize: 18 }}>{req.vehicleName}</h4>
           </div>
         </div>
 
-        <div style={{ padding: '20px 22px' }}>
+        <div style={{ padding: '16px' }}>
 
-          {/* Location (revealed after acceptance) */}
-          <div style={{ background: 'var(--primary-light)', borderRadius: 14, padding: '14px 16px', marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', marginBottom: 8 }}>📍 EXACT PICKUP LOCATION (REVEALED)</div>
+          {/* Location revealed */}
+          <div style={{ background: 'var(--primary-light)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <MapPin size={12} /> EXACT PICKUP LOCATION
+            </div>
             {locationLines.map((line, i) => (
               <div key={i} style={{ fontWeight: i === 0 ? 700 : 500, fontSize: i === 0 ? 15 : 12, color: i === 0 ? 'var(--text-main)' : 'var(--text-muted)', marginBottom: 2 }}>{line}</div>
             ))}
           </div>
 
-          {/* 20-minute timer (only while status is 'accepted' i.e. not yet in_use) */}
+          {/* Countdown */}
           {bikeStatus === 'accepted' && countdown && !countdown.expired && (
             <div style={{
               background: countdown.secondsLeft < 300 ? '#FEE2E2' : '#FEF3C7',
-              borderRadius: 14, padding: '14px 16px', marginBottom: 16,
+              borderRadius: 12, padding: '12px 14px', marginBottom: 12,
               display: 'flex', alignItems: 'center', gap: 12
             }}>
               <Clock size={22} color={countdown.secondsLeft < 300 ? 'var(--error)' : '#92400E'} />
@@ -93,81 +105,68 @@ function AcceptedBikeCard({ req }) {
                 <div style={{ fontSize: 11, fontWeight: 700, color: countdown.secondsLeft < 300 ? 'var(--error)' : '#92400E', marginBottom: 2 }}>
                   TIME TO ARRIVE
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: countdown.secondsLeft < 300 ? 'var(--error)' : '#92400E', fontVariantNumeric: 'tabular-nums' }}>
+                <div style={{ fontSize: 26, fontWeight: 900, color: countdown.secondsLeft < 300 ? 'var(--error)' : '#92400E', fontVariantNumeric: 'tabular-nums' }}>
                   {countdown.label}
                 </div>
               </div>
               <div style={{ flex: 1, textAlign: 'right', fontSize: 12, color: countdown.secondsLeft < 300 ? 'var(--error)' : '#92400E', fontWeight: 600 }}>
-                Go to the bike location within 20 minutes or you'll have to rebook.
+                Reach the bike within 20 minutes or you'll have to rebook.
               </div>
             </div>
           )}
 
-          {/* Expired */}
           {bikeStatus === 'accepted' && countdown?.expired && (
-            <div style={{ background: '#FEE2E2', borderRadius: 14, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <AlertTriangle size={20} color="var(--error)" />
-              <div style={{ fontWeight: 700, color: 'var(--error)' }}>Time expired. Please rebook.</div>
+            <div style={{ background: '#FEE2E2', borderRadius: 12, padding: '12px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <AlertTriangle size={18} color="var(--error)" />
+              <div style={{ fontWeight: 700, color: 'var(--error)', fontSize: 14 }}>Time expired. Please rebook.</div>
             </div>
           )}
 
-          {/* "I'm Here" → before photo (only when status is accepted and timer not expired) */}
+          {/* Actions by status */}
           {bikeStatus === 'accepted' && countdown && !countdown.expired && (
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: 12 }}
-              onClick={() => setPhotoPhase('before')}
-            >
-              <Camera size={18} /> I'm Here — Take Before Photo
+            <button className="btn btn-primary" style={{ width: '100%', marginBottom: 12 }} onClick={() => setPhotoPhase('before')}>
+              <Camera size={17} /> I'm Here — Take Before Photo
             </button>
           )}
 
-          {/* During ride: return flow */}
           {bikeStatus === 'in_use' && (
-            <div style={{ background: '#D1FAE5', borderRadius: 14, padding: '14px 16px', marginBottom: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 4 }}>🏍️ Ride in progress</div>
-              <div style={{ fontSize: 13, color: '#047857' }}>Return the bike and submit an after photo + payment to complete the trip.</div>
-            </div>
-          )}
-
-          {bikeStatus === 'in_use' && (
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%', background: '#F59E0B', boxShadow: 'none', marginBottom: 12 }}
-              onClick={() => setPhotoPhase('after')}
-            >
-              <Camera size={18} /> Return Bike — Take After Photo
-            </button>
-          )}
-
-          {/* Payment step */}
-          {bikeStatus === 'returning' && (
             <>
-              <div style={{ background: '#FEF3C7', borderRadius: 14, padding: '14px 16px', marginBottom: 14 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#92400E', marginBottom: 4 }}>↩ After photo submitted!</div>
-                <div style={{ fontSize: 13, color: '#92400E' }}>Please pay to complete the trip.</div>
-              </div>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '16px', background: 'var(--bg-color)', borderRadius: 12, marginBottom: 14
-              }}>
-                <div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL FARE</div>
-                  <div style={{ fontWeight: 900, fontSize: 28, color: 'var(--primary)' }}>৳{req.totalFare}</div>
+              <div style={{ background: '#D1FAE5', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#065F46', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Bike size={16} /> Ride in progress
                 </div>
-                <DollarSign size={28} color="var(--primary)" />
+                <div style={{ fontSize: 13, color: '#047857' }}>Return the bike and submit an after photo to complete.</div>
               </div>
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%' }}
-                onClick={() => completeTrip(req.requestId || req.id)}
-              >
-                ✓ Confirm Payment & Complete Trip
+              <button className="btn btn-primary" style={{ width: '100%', background: '#F59E0B', boxShadow: 'none', marginBottom: 12 }} onClick={() => setPhotoPhase('after')}>
+                <Camera size={17} /> Return Bike — Take After Photo
               </button>
             </>
           )}
 
-          {/* Fare */}
+          {bikeStatus === 'returning' && (
+            <>
+              <div style={{ background: '#FEF3C7', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#92400E', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <DollarSign size={15} /> After photo submitted
+                </div>
+                <div style={{ fontSize: 13, color: '#92400E' }}>Please pay to complete the trip.</div>
+              </div>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '14px', background: 'var(--bg-color)', borderRadius: 12, marginBottom: 12
+              }}>
+                <div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>TOTAL FARE</div>
+                  <div style={{ fontWeight: 900, fontSize: 26, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>৳{req.totalFare}</div>
+                </div>
+                <DollarSign size={26} color="var(--primary)" />
+              </div>
+              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { completeTrip(req.requestId || req.id); toast.success('Trip completed', 'Payment confirmed. Please rate the owner.'); }}>
+                <CheckCircle2 size={17} /> Confirm Payment & Complete Trip
+              </button>
+            </>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, marginTop: 10 }}>
             <span className="text-muted">Estimated fare:</span>
             <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: 18 }}>৳{req.totalFare}</span>
@@ -178,11 +177,106 @@ function AcceptedBikeCard({ req }) {
   );
 }
 
+function PendingBikeCard({ req, onMessage }) {
+  return (
+    <div style={{
+      background: 'white', border: '1.5px solid var(--border-color)',
+      borderRadius: 14, padding: '14px',
+      display: 'flex', gap: 12, alignItems: 'center', boxShadow: 'var(--shadow-sm)'
+    }}>
+      <img src={req.vehicleImage} alt={req.vehicleName} style={{ width: 72, height: 56, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          <b style={{ fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.vehicleName}</b>
+          <span className="badge badge-yellow">Pending</span>
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.location}</div>
+        <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 16, fontVariantNumeric: 'tabular-nums' }}>৳{req.totalFare}</div>
+      </div>
+      <button className="btn btn-outline btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={onMessage}>
+        <MessageCircle size={14} /> Chat
+      </button>
+    </div>
+  );
+}
+
+function PassengerRequestCard({ ride, hasActiveBike, onAccept, onCounter }) {
+  const [counter, setCounter] = useState('');
+  const showCounter = ride.status === 'counter_offered';
+  const counterFare = showCounter ? ride.counterOffer?.fare : null;
+
+  return (
+    <div style={{ background: 'white', border: '1.5px solid var(--border-color)', borderRadius: 16, padding: '16px', boxShadow: 'var(--shadow-sm)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src={ride.passengerAvatar} alt={ride.passengerName} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{ride.passengerName}</div>
+            <div style={{ fontSize: 12, color: '#F59E0B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Star size={11} fill="#F59E0B" /> {ride.passengerRating} · {ride.time}
+            </div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>৳{ride.estimatedFare}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>~{ride.estimatedTime}</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px', background: 'var(--bg-color)', borderRadius: 12, marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <MapPin size={15} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>PICKUP</div>
+            <div style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.4 }}>{ride.pickup}</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <Navigation size={15} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>DROPOFF</div>
+            <div style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.4 }}>{ride.dropoff}</div>
+          </div>
+        </div>
+      </div>
+
+      {showCounter && counterFare && (
+        <div style={{ background: '#FEF3C7', borderRadius: 10, padding: '10px 12px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <AlertTriangle size={15} color="#92400E" />
+          <span style={{ fontSize: 13, color: '#92400E', fontWeight: 600 }}>
+            {ride.counterOffer.renterName} countered at ৳{counterFare}
+          </span>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+        <button className="btn btn-primary" style={{ flex: 1.4 }} disabled={!hasActiveBike} onClick={onAccept}>
+          <CheckCircle2 size={15} /> Accept ৳{showCounter && counterFare ? counterFare : ride.estimatedFare}
+        </button>
+        <div style={{ flex: 1 }}>
+          <input
+            type="number"
+            className="input"
+            placeholder="Counter ৳"
+            disabled={!hasActiveBike}
+            value={counter}
+            onChange={e => setCounter(e.target.value)}
+            style={{ fontSize: 14 }}
+          />
+          <button className="btn btn-outline" style={{ width: '100%', marginTop: 6, minHeight: 34 }} disabled={!hasActiveBike || !counter} onClick={() => onCounter(counter)}>
+            Send offer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RenterRequests() {
   const { renterBookingRequests, data, activeRentals, acceptPassengerRide, makeCounterOffer } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [tab, setTab] = useState('sent');
-  const [counterAmounts, setCounterAmounts] = useState({});
 
   const activeReqs = renterBookingRequests.filter(r => r.status === 'active');
   const acceptedReqs = renterBookingRequests.filter(r => r.status === 'accepted');
@@ -191,25 +285,25 @@ export default function RenterRequests() {
   const pastReqs = renterBookingRequests.filter(r => r.status === 'completed');
   const pendingReqs = renterBookingRequests.filter(r => r.status === 'pending');
 
-  const hasActiveBike = activeRentals.length > 0;
+  const hasActiveBike = activeRentals.length > 0 || renterBookingRequests.some(r => r.bikeStatus === 'in_use' || r.bikeStatus === 'returning');
   const passReqs = data.availableRideRequests;
 
   const sentCount = renterBookingRequests.length;
   const receivedCount = passReqs.length;
-  const pastSent = renterBookingRequests.filter(r => r.status === 'completed').map(r => ({ ...r, type: 'sent', displayStatus: 'accepted' }));
+  const pastSent = pastReqs.map(r => ({ ...r, type: 'sent', displayStatus: 'accepted' }));
   const pastReceived = (data.pastTrips || []).map(t => ({ ...t, type: 'received', displayStatus: 'accepted' }));
   const allPastRequests = [...pastSent, ...pastReceived];
 
   const handleAcceptPassenger = (rideId) => {
     acceptPassengerRide(rideId);
+    toast.success('Ride accepted', 'Head to the pickup point.');
     navigate('/renter/dashboard');
   };
 
-  const handleCounterOffer = (rideId) => {
-    const amt = counterAmounts[rideId];
-    if (!amt || isNaN(amt)) { alert('Please enter a valid amount'); return; }
+  const handleCounterOffer = (rideId, amt) => {
+    if (!amt || isNaN(amt)) { toast.error('Invalid amount', 'Enter a valid fare first.'); return; }
     makeCounterOffer(rideId, Number(amt), 'Nazia Putul');
-    alert(`Counter offer of ৳${amt} sent!`);
+    toast.info('Counter offer sent', `৳${amt} offer sent to the passenger.`);
   };
 
   const tabs = [
@@ -219,22 +313,16 @@ export default function RenterRequests() {
   ];
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <h2 style={{ marginBottom: 8 }}>Requests</h2>
-      <p className="text-muted" style={{ marginBottom: 28 }}>Manage your bike bookings and incoming passenger requests.</p>
+    <div style={{ maxWidth: 640, margin: '0 auto' }}>
+      <PageHeader title="Requests" subtitle="Manage bookings and passenger requests" />
 
-      {/* Tab bar */}
-      <div className="tabs" style={{ marginBottom: 32 }}>
+      <div className="tabs" style={{ marginBottom: 20 }}>
         {tabs.map(t => (
-          <button
-            key={t.id}
-            className={`tab-btn ${tab === t.id ? 'active' : ''}`}
-            onClick={() => setTab(t.id)}
-          >
+          <button key={t.id} className={`tab-btn ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
             {t.label}
             {t.count > 0 && (
               <span style={{
-                marginLeft: 8, background: tab === t.id ? 'var(--primary)' : 'var(--border-color)',
+                marginLeft: 6, background: tab === t.id ? 'var(--primary)' : 'var(--border-color)',
                 color: tab === t.id ? 'white' : 'var(--text-muted)',
                 borderRadius: 999, padding: '1px 7px', fontSize: 11, fontWeight: 700
               }}>{t.count}</span>
@@ -243,12 +331,13 @@ export default function RenterRequests() {
         ))}
       </div>
 
-      {/* === SENT REQUESTS === */}
       {tab === 'sent' && (
         <div>
           {renterBookingRequests.length === 0 ? (
             <div className="empty-state">
-              <div style={{ fontSize: 56, marginBottom: 16 }}>🏍️</div>
+              <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Bike size={28} color="var(--primary)" />
+              </div>
               <h3>No booking requests yet</h3>
               <p>When you book a bike, your requests will appear here.</p>
               <button className="btn btn-primary" style={{ width: 'auto', marginTop: 16 }} onClick={() => navigate('/renter/browse')}>
@@ -256,46 +345,22 @@ export default function RenterRequests() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-              {/* Accepted/Active bookings — show rich card with location + timer + photo flow */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {(acceptedReqs.length > 0 || activeReqs.length > 0) && (
                 <div>
-                  <h4 style={{ marginBottom: 14, color: 'var(--primary)' }}>● Active & Accepted Bookings</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {[...acceptedReqs, ...activeReqs].map(req => (
-                      <AcceptedBikeCard key={req.id} req={req} />
-                    ))}
-                  </div>
+                  <div className="micro-label" style={{ marginBottom: 10 }}>Active & accepted bookings</div>
+                  {[...acceptedReqs, ...activeReqs].map(req => (
+                    <AcceptedBikeCard key={req.id} req={req} />
+                  ))}
                 </div>
               )}
 
-              {/* Pending bookings */}
               {pendingReqs.length > 0 && (
                 <div>
-                  <h4 style={{ marginBottom: 14, color: 'var(--text-muted)' }}>Pending Approval</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div className="micro-label" style={{ marginBottom: 10 }}>Pending approval</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {pendingReqs.map(req => (
-                      <div key={req.id} style={{
-                        background: 'white', border: '2px solid var(--border-color)',
-                        borderRadius: 16, padding: '18px 22px',
-                        display: 'flex', gap: 18, alignItems: 'center', boxShadow: 'var(--shadow-sm)'
-                      }}>
-                        <img src={req.vehicleImage} alt={req.vehicleName} style={{ width: 90, height: 64, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                            <h4 style={{ marginBottom: 0 }}>{req.vehicleName}</h4>
-                            <span className="badge badge-yellow">Pending</span>
-                          </div>
-                          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4 }}>{req.location}</div>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 17 }}>৳{req.totalFare}</div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <button className="btn btn-outline btn-sm" style={{ width: 'auto' }} onClick={() => navigate('/chat')}>
-                            <MessageCircle size={14} /> Message
-                          </button>
-                        </div>
-                      </div>
+                      <PendingBikeCard key={req.id} req={req} onMessage={() => navigate('/chat')} />
                     ))}
                   </div>
                 </div>
@@ -305,131 +370,78 @@ export default function RenterRequests() {
         </div>
       )}
 
-      {/* === PASSENGER REQUESTS === */}
       {tab === 'passengers' && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <h3 style={{ marginBottom: 0 }}>Received requests</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h3 style={{ marginBottom: 0, fontSize: 18 }}>Received requests</h3>
             {!hasActiveBike && (
-              <span className="badge badge-yellow">⚠ Book a bike first to accept passengers</span>
+              <span className="badge badge-yellow">Book a bike first</span>
             )}
           </div>
 
           {passReqs.length === 0 ? (
             <div className="empty-state">
-              <div style={{ fontSize: 56, marginBottom: 16 }}>👤</div>
+              <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Navigation size={28} color="var(--primary)" />
+              </div>
               <h3>No passenger requests</h3>
               <p>When passengers post ride requests, they'll appear here.</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {passReqs.map(ride => (
-                <div key={ride.id} style={{
-                  background: 'white', border: '2px solid var(--border-color)',
-                  borderRadius: 18, padding: '24px', boxShadow: 'var(--shadow-sm)'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <img src={ride.passengerAvatar} alt={ride.passengerName} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover' }} />
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{ride.passengerName}</div>
-                        <div style={{ fontSize: 13, color: '#F59E0B', fontWeight: 600 }}>★ {ride.passengerRating}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{ride.time}</div>
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--primary)' }}>৳{ride.estimatedFare}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>~{ride.estimatedTime}</div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '14px', background: 'var(--bg-color)', borderRadius: 12, marginBottom: 18 }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <MapPin size={17} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 2 }} />
-                      <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 2 }}>PICKUP</div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{ride.pickup}</div>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <Navigation size={17} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
-                      <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 2 }}>DROPOFF</div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{ride.dropoff}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-                    <button
-                      className="btn btn-primary" style={{ flex: 1 }}
-                      disabled={!hasActiveBike}
-                      onClick={() => handleAcceptPassenger(ride.id)}
-                    >
-                      <CheckCircle size={16} /> Accept ৳{ride.estimatedFare}
-                    </button>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 4 }}>Counter Offer (৳)</div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input
-                          type="number" className="input"
-                          placeholder={`e.g. ${ride.estimatedFare - 30}`}
-                          disabled={!hasActiveBike}
-                          value={counterAmounts[ride.id] || ''}
-                          onChange={e => setCounterAmounts(prev => ({ ...prev, [ride.id]: e.target.value }))}
-                          style={{ flex: 1 }}
-                        />
-                        <button className="btn btn-outline" style={{ width: 'auto' }} disabled={!hasActiveBike} onClick={() => handleCounterOffer(ride.id)}>
-                          Send
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <PassengerRequestCard
+                  key={ride.id}
+                  ride={ride}
+                  hasActiveBike={hasActiveBike}
+                  onAccept={() => handleAcceptPassenger(ride.id)}
+                  onCounter={amt => handleCounterOffer(ride.id, amt)}
+                />
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* === PAST === */}
       {tab === 'past' && (
         <div>
           {allPastRequests.length === 0 ? (
             <div className="empty-state">
-              <div style={{ fontSize: 56, marginBottom: 16 }}>🕒</div>
+              <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Clock size={28} color="var(--primary)" />
+              </div>
               <h3>No past requests</h3>
-              <p>Your history of requests will appear here.</p>
+              <p>Your history of bookings and rides will appear here.</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {allPastRequests.map((req, idx) => (
                 <div key={req.id || idx} style={{
                   background: 'white', border: '1px solid var(--border-color)',
-                  borderRadius: 16, padding: '18px 22px',
+                  borderRadius: 14, padding: '14px 16px',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   boxShadow: 'var(--shadow-sm)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     {req.type === 'sent' ? (
-                      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                        <Navigation size={22} />
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', flexShrink: 0 }}>
+                        <Bike size={19} />
                       </div>
                     ) : (
-                      <img src={req.passengerAvatar || req.ownerAvatar} alt={req.owner} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+                      <img src={req.passengerAvatar || req.ownerAvatar} alt={req.owner} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                     )}
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {req.type === 'sent' ? `Sent: ${req.vehicleName || req.vehicle}` : `Ride: ${req.owner}`}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                         {req.type === 'sent'
                           ? `৳${req.totalFare}`
                           : `${req.pickup || req.date} → ${req.dropoff || ''} · ৳${req.totalFare || req.estimatedFare}`}
                       </div>
                     </div>
                   </div>
-                  <span className={req.displayStatus === 'accepted' ? 'badge badge-green' : 'badge badge-red'}>
+                  <span className={req.displayStatus === 'accepted' ? 'badge badge-green' : 'badge badge-red'} style={{ flexShrink: 0 }}>
                     {req.displayStatus === 'accepted' ? 'Completed' : 'Rejected'}
                   </span>
                 </div>

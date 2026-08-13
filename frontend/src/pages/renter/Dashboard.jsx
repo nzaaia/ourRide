@@ -1,142 +1,169 @@
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Search, Clock, Bookmark, Star, Map, Users, ChevronRight } from 'lucide-react';
+import { Search, Clock, Bookmark, Star, Map, MapPin, Users, ChevronRight, CircleUserRound, Bike } from 'lucide-react';
+import { useToast } from '../../components/ui/Toast';
 
 export default function RenterDashboard() {
-  const { data, activeRentals, activePassengerRides } = useAuth();
+  const { data, activeRentals, activePassengerRides, user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const savedCount = data.savedBikes.length;
   const tripCount = (data.pastTrips || []).length;
   const rating = data.userRating;
+  const nearby = data.listings.filter(l => l.isAvailable && l.status === 'available' && l.ownerId !== user?.id).slice(0, 4);
 
   const statCards = [
-    { icon: <Map size={24} color="var(--primary)" />, label: 'Past Trips', value: tripCount, route: '/renter/trips', bg: 'white' },
-    { icon: <Bookmark size={24} color="#8B5CF6" />, label: 'Saved Bikes', value: savedCount, route: '/renter/saved', bg: 'white' },
-    { icon: <Star size={24} color="#F59E0B" />, label: 'Your Rating', value: `${rating}★`, route: '/renter/ratings', bg: 'white' },
+    { icon: <Map size={20} color="var(--forest)" />, label: 'Past Trips', value: tripCount, route: '/renter/trips' },
+    { icon: <Bookmark size={20} color="var(--accent-purple)" />, label: 'Saved', value: savedCount, route: '/renter/saved' },
+    { icon: <Star size={20} color="#F59E0B" />, label: 'Rating', value: rating.toFixed(1), route: '/renter/ratings' },
   ];
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-      
-      {/* Header */}
-      <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-        <div>
-          <h2 style={{ marginBottom: 4 }}>My Dashboard</h2>
-          <p className="text-muted" style={{ marginBottom: 0 }}>Welcome back! Here's what's going on.</p>
+    <div style={{ maxWidth: 900, margin: '0 auto' }}>
+
+      {/* Hero header */}
+      <div className="hero-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ fontWeight: 900, fontSize: 20, letterSpacing: -0.4 }}>OurRide</div>
+          <button
+            onClick={() => navigate('/profile')}
+            aria-label="Profile"
+            style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}
+          >
+            <CircleUserRound size={20} />
+          </button>
         </div>
-        <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => navigate('/renter/browse')}>
-          <Search size={18} /> Find a Bike
+        <div style={{ fontSize: 21, fontWeight: 800, marginBottom: 2 }}>Hi, {user?.name?.split(' ')[0] || 'there'}</div>
+        <div style={{ fontSize: 13, opacity: 0.85 }}>
+          {nearby.length > 0 ? `${nearby.length} bikes available near you right now` : 'No bikes available right now'}
+        </div>
+      </div>
+
+      {/* Active rental banner */}
+      {activeRentals.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          {activeRentals.map((rental, idx) => (
+            <div key={idx} style={{
+              background: '#fff', border: '2px solid var(--primary)', borderRadius: 18,
+              padding: '16px', display: 'flex', gap: 12, alignItems: 'center', boxShadow: 'var(--shadow-sm)',
+            }}>
+              <img src={rental.image} alt="" style={{ width: 64, height: 48, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, marginBottom: 2 }}>ACTIVE RIDE</div>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>{rental.vehicleName}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Clock size={13} color="var(--error)" /> <span style={{ color: 'var(--error)', fontWeight: 600 }}>1h 45m left</span>
+                </div>
+              </div>
+              <button className="btn btn-primary btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={() => navigate('/passenger/search')}>
+                <Users size={14} /> Passengers
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Quick actions */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+        <button
+          onClick={() => navigate('/renter/browse')}
+          style={{
+            background: '#fff', border: '1px solid var(--border-color)', borderRadius: 16,
+            padding: '14px', textAlign: 'left', boxShadow: 'var(--shadow-sm)', minHeight: 84,
+          }}
+        >
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, color: 'var(--primary)' }}>
+            <Search size={20} />
+          </div>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>Find a bike</div>
+          <div className="text-light" style={{ fontSize: 12 }}>Browse by the hour</div>
+        </button>
+        <button
+          onClick={() => navigate('/renter/requests')}
+          style={{
+            background: '#fff', border: '1px solid var(--border-color)', borderRadius: 16,
+            padding: '14px', textAlign: 'left', boxShadow: 'var(--shadow-sm)', minHeight: 84,
+          }}
+        >
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, color: 'var(--accent-purple)' }}>
+            <Users size={20} />
+          </div>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>
+            Ride requests
+            {data.availableRideRequests.length > 0 && (
+              <span style={{ color: 'var(--primary)', fontWeight: 800 }}> ({data.availableRideRequests.length})</span>
+            )}
+          </div>
+          <div className="text-light" style={{ fontSize: 12 }}>Pick up passengers</div>
         </button>
       </div>
 
-      {/* Active Rental Banner */}
-      {activeRentals.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          {activeRentals.map((rental, idx) => (
-            <div key={idx} style={{
-              background: 'white',
-              border: '2px solid var(--primary)',
-              borderRadius: 16,
-              padding: '24px 28px',
-              color: 'var(--text-main)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              boxShadow: 'var(--shadow-sm)'
-            }}>
-              <div className="flex items-center gap-4">
-                <img src={rental.image} alt={rental.vehicleName} style={{ width: 100, height: 70, objectFit: 'cover', borderRadius: 10 }} />
-                <div>
-                  <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 700, marginBottom: 4 }}>● ACTIVE RIDE</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>{rental.vehicleName}</div>
-                  <div style={{ fontSize: 15, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Clock size={15} color="var(--error)" /> <span style={{ color: 'var(--error)' }}>Time Remaining: <strong>1h 45m</strong></span>
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button
-                  onClick={() => navigate('/passenger/search')}
-                  style={{ background: 'var(--primary)', color: 'white', padding: '10px 18px', borderRadius: 10, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-                >
-                  <Users size={16} /> Find Passengers
-                </button>
-                <button
-                  onClick={() => navigate('/chat')}
-                  style={{ background: 'white', color: 'var(--text-main)', padding: '10px 18px', borderRadius: 10, fontWeight: 600, border: '1.5px solid var(--border-color)', cursor: 'pointer' }}
-                >
-                  Message Owner
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Active Passengers */}
-      {activePassengerRides.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <h3 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><Users size={20} /> Passengers On Board</h3>
-          {activePassengerRides.map((ride, idx) => (
-            <div key={idx} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '2px solid #3B82F6' }}>
-              <div className="flex items-center gap-3">
-                <img src={ride.passengerAvatar} alt={ride.passengerName} className="avatar" style={{ width: 48, height: 48 }} />
-                <div>
-                  <div className="font-semibold">{ride.passengerName}</div>
-                  <div className="text-sm text-muted">{ride.pickup} → {ride.dropoff}</div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button className="btn btn-outline btn-sm" style={{ width: 'auto' }} onClick={() => navigate('/chat')}>Chat</button>
-                <button className="btn btn-primary btn-sm" style={{ width: 'auto' }}>Navigate</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Stat Cards */}
-      <div className="dashboard-grid" style={{ marginBottom: 32 }}>
+      {/* Stat cards */}
+      <div className="dashboard-grid" style={{ marginBottom: 24 }}>
         {statCards.map(card => (
           <div
             key={card.label}
             onClick={() => navigate(card.route)}
-            style={{
-              background: card.bg,
-              border: '1px solid var(--border-color)',
-              borderRadius: 16,
-              padding: '24px 20px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; }}
+            className="stat-card"
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
           >
             {card.icon}
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div className="text-muted text-sm">{card.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 800 }}>{card.value}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.2 }}>{card.value}</div>
             </div>
-            <ChevronRight size={18} color="var(--text-muted)" style={{ marginLeft: 'auto' }} />
+            <ChevronRight size={16} color="var(--text-light)" />
           </div>
         ))}
       </div>
 
-      {/* CTA */}
-      {!activeRentals.length && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: 16, padding: '40px', textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>🏍️</div>
-          <h3 style={{ marginBottom: 8 }}>Ready for your next ride?</h3>
-          <p className="text-muted" style={{ marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' }}>
-            Browse available scooters on campus and book instantly.
-          </p>
-          <button className="btn btn-primary btn-lg" style={{ width: 'auto' }} onClick={() => navigate('/renter/browse')}>
-            Browse Available Bikes
+      {/* Nearby bikes */}
+      {nearby.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ marginBottom: 0 }}>Nearby bikes</h3>
+            <button onClick={() => navigate('/renter/browse')} className="btn btn-ghost btn-sm" style={{ width: 'auto', color: 'var(--primary)', fontWeight: 600 }}>
+              View all <ChevronRight size={15} />
+            </button>
+          </div>
+          <div className="cards-grid">
+            {nearby.map(bike => (
+              <div key={bike.id} className="bike-tile" style={{ cursor: 'pointer' }} onClick={() => navigate(`/renter/book/${bike.id}`)}>
+                <div className="tile-media">
+                  <img src={bike.image} alt={bike.vehicleName} loading="lazy" />
+                  <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(12,61,36,0.92)', color: '#fff', padding: '2px 9px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
+                    ৳{bike.hourlyRate}/hr
+                  </div>
+                </div>
+                <div className="tile-body">
+                  <div style={{ fontWeight: 800, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bike.vehicleName}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)', margin: '3px 0 6px' }}>
+                    <MapPin size={11} /> {bike.location}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 700, fontSize: 12, marginBottom: 8 }}>
+                    <Star size={11} color="#F59E0B" fill="#F59E0B" /> {bike.rating}
+                  </div>
+                  <button className="btn btn-primary" style={{ width: '100%', minHeight: 38, padding: '8px 0' }} onClick={(e) => { e.stopPropagation(); navigate(`/renter/book/${bike.id}`); }}>
+                    Book
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty CTA */}
+      {!activeRentals.length && nearby.length === 0 && (
+        <div style={{ background: 'var(--surface)', border: '1px dashed var(--border-color)', borderRadius: 16, padding: '36px 20px', textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Bike size={28} color="var(--primary)" />
+          </div>
+          <h3 style={{ marginBottom: 6 }}>Ready for your next ride?</h3>
+          <p className="text-muted text-sm" style={{ marginBottom: 18 }}>Browse available scooters on campus and book instantly.</p>
+          <button className="btn btn-primary" style={{ width: 'auto' }} onClick={() => navigate('/renter/browse')}>
+            <Search size={16} /> Browse Available Bikes
           </button>
         </div>
       )}

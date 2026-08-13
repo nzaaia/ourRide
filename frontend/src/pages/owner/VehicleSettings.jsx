@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ChevronLeft, Save, Clock, MapPin, DollarSign, Sliders, CalendarDays } from 'lucide-react';
+import { ChevronLeft, Save, Clock, MapPin, DollarSign, Sliders, CalendarDays, Lock, CheckCircle2 } from 'lucide-react';
 
 const ALL_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -39,7 +39,11 @@ export default function VehicleSettings() {
         </button>
         <h2 style={{ marginBottom: 24 }}>{vehicle.vehicleName}</h2>
         <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Lock size={28} color="var(--error)" />
+            </div>
+          </div>
           <h3 style={{ color: 'var(--error)' }}>Settings Locked</h3>
           <p className="text-muted">This vehicle is currently on an active ride. Settings are locked until the trip is completed.</p>
           <button className="btn btn-outline" style={{ marginTop: 20, width: 'auto' }} onClick={() => navigate('/owner/dashboard')}>
@@ -215,7 +219,7 @@ export default function VehicleSettings() {
 
         {settings.availableDays.length > 0 && (
           <div style={{ marginTop: 16, padding: '12px 16px', background: 'var(--primary-light)', borderRadius: 10, fontSize: 13, color: '#065F46', fontWeight: 600 }}>
-            ✓ Bike available: {settings.availableDays.join(', ')} · {settings.availableFrom} – {settings.availableTo}
+            <CheckCircle2 size={15} /> Bike available: {settings.availableDays.join(', ')} · {settings.availableFrom} – {settings.availableTo}
           </div>
         )}
       </div>
@@ -225,7 +229,7 @@ export default function VehicleSettings() {
         style={{ width: '100%', padding: '14px', fontSize: 16 }}
         onClick={handleSave}
       >
-        {saved ? '✓ Saved!' : <><Save size={18} /> Save Settings</>}
+        {saved ? <><CheckCircle2 size={18} /> Saved!</> : <><Save size={18} /> Save Settings</>}
       </button>
     </div>
   );

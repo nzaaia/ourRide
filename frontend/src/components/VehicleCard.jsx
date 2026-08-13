@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Star } from 'lucide-react';
 
 export default function VehicleCard({ vehicle }) {
   const navigate = useNavigate();
@@ -16,7 +17,9 @@ export default function VehicleCard({ vehicle }) {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <img src={vehicle.ownerAvatar} alt={vehicle.ownerName} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
-              <span className="text-sm font-semibold">{vehicle.rating} ★</span>
+              <span className="text-sm font-semibold" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Star size={12} color="#F59E0B" fill="#F59E0B" /> {vehicle.rating}
+              </span>
             </div>
             <div className="font-bold" style={{ color: 'var(--primary)' }}>
               ৳{vehicle.ratePerHour}/hr

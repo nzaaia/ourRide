@@ -48,7 +48,9 @@ export default function SavedBikes() {
                   <span className="text-sm font-semibold" style={{ color: bike.isAvailable ? 'var(--primary)' : 'var(--error)' }}>
                     {bike.isAvailable ? '● Available' : '● Rented'}
                   </span>
-                  <span className="stars font-bold">★ {bike.rating}</span>
+                  <span className="font-bold" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    <Star size={13} color="#F59E0B" fill="#F59E0B" /> {bike.rating}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
                   <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>৳{bike.hourlyRate}</span>
