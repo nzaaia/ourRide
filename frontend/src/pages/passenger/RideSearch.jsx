@@ -6,7 +6,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import { useToast } from '../../components/ui/Toast';
 
 export default function RideSearch() {
-  const { data, role, acceptPassengerRide, makeCounterOffer, activeRentals, isAuthenticated, login, submitRideRequest, user } = useAuth();
+  const { data, role, acceptPassengerRide, makeCounterOffer, activeRentals, activePassengerRides, isAuthenticated, login, submitRideRequest, user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -138,6 +138,82 @@ export default function RideSearch() {
   };
 
   const myRequest = data.availableRideRequests.find(r => r.id === myRideId);
+  // Check if ride was accepted (moved to activePassengerRides)
+  const acceptedRide = activePassengerRides.find(r => r.id === myRideId);
+
+  // === RIDE ACCEPTED STATUS SCREEN ===
+  if (acceptedRide) {
+    const chatUrl = acceptedRide.renterName
+      ? `/chat?name=${encodeURIComponent(acceptedRide.renterName)}&context=${encodeURIComponent('Your ride to ' + (acceptedRide.dropoff || 'destination'))}&avatar=${encodeURIComponent(acceptedRide.renterAvatar || '')}`
+      : '/chat';
+    return (
+      <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <PageHeader title="Ride Confirmed!" subtitle="Your rider is on the way" />
+
+        {/* Status Banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, var(--forest) 0%, var(--primary) 100%)',
+          borderRadius: 20, padding: '24px 20px', marginBottom: 16, color: 'white', textAlign: 'center'
+        }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🏍️</div>
+          <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.8, marginBottom: 6 }}>STATUS</div>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>Rider is heading to you</div>
+          <div style={{ fontSize: 13, opacity: 0.75, marginTop: 6 }}>Stay at your pickup location and watch for your rider</div>
+        </div>
+
+        {/* Rider info */}
+        <div className="card" style={{ padding: 20, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+            {acceptedRide.renterAvatar ? (
+              <img src={acceptedRide.renterAvatar} alt={acceptedRide.renterName} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>🏍️</div>
+            )}
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 18 }}>{acceptedRide.renterName || 'Your Rider'}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Your assigned rider</div>
+            </div>
+            <button
+              className="btn btn-primary"
+              style={{ width: 'auto', marginLeft: 'auto' }}
+              onClick={() => navigate(chatUrl)}
+            >
+              <MessageCircle size={16} /> Message
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '14px', background: 'var(--bg-color)', borderRadius: 12, marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <MapPin size={15} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>PICKUP</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{acceptedRide.pickup}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Navigation size={15} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>DROPOFF</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{acceptedRide.dropoff}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: '1px solid var(--border-color)' }}>
+            <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Agreed fare</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>৳{acceptedRide.estimatedFare}</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '12px', background: 'var(--primary-light)', borderRadius: 12 }}>
+          <CheckCircle size={16} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <p style={{ fontSize: 13, color: '#065F46', marginBottom: 0 }}>
+            Use the Message button to coordinate your exact pickup spot. Your ride is confirmed — no need to rebook.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (searched && myRequest) {
     return (

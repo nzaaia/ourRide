@@ -3,43 +3,57 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
   PlusCircle, Bell, Bike, ChevronRight, Clock, X,
-  MapPin, User, Phone, CreditCard, Star, DollarSign,
-  Activity, Timer, CheckCircle2, ParkingSquare, HelpCircle
+  MapPin, Phone, CreditCard, Star, DollarSign,
+  Activity, Timer, CheckCircle2, ParkingSquare, MessageCircle, Navigation, XCircle
 } from 'lucide-react';
+import { useToast } from '../../components/ui/Toast';
+
+// Countdown helper: returns { label, secondsLeft, expired }
+function useCountdown(startIso, limitMinutes) {
+  const [secondsLeft, setSecondsLeft] = useState(null);
+  useEffect(() => {
+    if (!startIso || !limitMinutes) return;
+    const deadline = new Date(new Date(startIso).getTime() + limitMinutes * 60000);
+    const calc = () => {
+      const diff = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
+      setSecondsLeft(diff);
+    };
+    calc();
+    const t = setInterval(calc, 1000);
+    return () => clearInterval(t);
+  }, [startIso, limitMinutes]);
+  if (secondsLeft === null) return null;
+  const m = Math.floor(secondsLeft / 60);
+  const s = secondsLeft % 60;
+  return { secondsLeft, label: `${m}:${s.toString().padStart(2, '0')}`, expired: secondsLeft === 0 };
+}
 
 function ActiveBikeModal({ bike, request, onClose }) {
-  const [timeLeft, setTimeLeft] = useState('');
+  const navigate = useNavigate();
+  const toast = useToast();
 
-  useEffect(() => {
-    const calcTime = () => {
-      if (!request?.tripStartedAt || !request?.estimatedDuration) {
-        setTimeLeft('—');
-        return;
-      }
-      const start = new Date(request.tripStartedAt);
-      const end = new Date(start.getTime() + request.estimatedDuration * 3600000);
-      const diff = end - Date.now();
-      if (diff <= 0) { setTimeLeft('Trip ended'); return; }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      setTimeLeft(`${h}h ${m}m`);
-    };
-    calcTime();
-    const t = setInterval(calcTime, 30000);
-    return () => clearInterval(t);
-  }, [request]);
+  // Two countdowns: arrival (20 min from acceptedAt) and trip duration (from tripStartedAt)
+  const arrivalCountdown = useCountdown(request?.acceptedAt, 20);
+  const tripCountdown = useCountdown(request?.tripStartedAt, (request?.estimatedDuration || 0) * 60);
 
   const bikeStatus = request?.bikeStatus || 'at_garage';
-  const estimatedEarnings = request
-    ? Math.round(request.estimatedFare * 0.87)
-    : '—';
+  const estimatedEarnings = request ? Math.round(request.estimatedFare * 0.87) : '—';
 
+  // When accepted but not yet in_use → renter is heading to the bike
   const statusInfo = {
-    at_garage: { label: 'At Garage', color: '#3B82F6', bg: '#DBEAFE', icon: <ParkingSquare size={20} /> },
+    at_garage: {
+      label: request?.status === 'accepted' ? 'Heading to Bike' : 'At Garage',
+      color: '#3B82F6', bg: '#DBEAFE',
+      icon: request?.status === 'accepted' ? <Navigation size={20} /> : <ParkingSquare size={20} />
+    },
     in_use: { label: 'In Use', color: '#10B981', bg: '#D1FAE5', icon: <Bike size={20} /> },
     returning: { label: 'Returning', color: '#F59E0B', bg: '#FEF3C7', icon: <Timer size={20} /> },
     returned: { label: 'Returned', color: '#6B7280', bg: '#F3F4F6', icon: <CheckCircle2 size={20} /> },
-  }[bikeStatus] || { label: 'Unknown', color: '#6B7280', bg: '#F3F4F6', icon: <HelpCircle size={20} /> };
+  }[bikeStatus] || { label: 'Active', color: '#3B82F6', bg: '#DBEAFE', icon: <Bike size={20} /> };
+
+  const chatUrl = request
+    ? `/chat?name=${encodeURIComponent(request.renterName)}&context=${encodeURIComponent(bike.vehicleName + ' booking')}&avatar=${encodeURIComponent(request.renterAvatar || '')}`
+    : '/chat';
 
   return (
     <div style={{
@@ -78,17 +92,53 @@ function ActiveBikeModal({ bike, request, onClose }) {
 
         <div style={{ padding: '20px' }}>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
+          {/* Contact Renter — available as soon as request is accepted */}
+          {request && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+              <button
+                className="btn btn-primary"
+                style={{ width: '100%' }}
+                onClick={() => { onClose(); navigate(chatUrl); }}
+              >
+                <MessageCircle size={17} /> Message
+              </button>
+              <button
+                className="btn btn-outline"
+                style={{ width: '100%' }}
+                onClick={() => toast.info('Calling renter', `Calling ${request.renterName} at ${request.renterPhone || '017XXXXXXXX'}...`)}
+              >
+                <Phone size={17} /> Call
+              </button>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             <div style={{ background: statusInfo.bg, borderRadius: 14, padding: '14px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: statusInfo.color, marginBottom: 6 }}>BIKE STATUS</div>
               <div style={{ color: statusInfo.color, marginBottom: 4 }}>{statusInfo.icon}</div>
-              <div style={{ fontWeight: 800, color: statusInfo.color }}>{statusInfo.label}</div>
+              <div style={{ fontWeight: 800, color: statusInfo.color, fontSize: 13 }}>{statusInfo.label}</div>
             </div>
-            <div style={{ background: '#FEE2E2', borderRadius: 14, padding: '14px' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', marginBottom: 6 }}>TIME REMAINING</div>
-              <Timer size={20} color="#EF4444" style={{ marginBottom: 4 }} />
-              <div style={{ fontWeight: 800, color: '#EF4444', fontSize: 18 }}>{timeLeft}</div>
-            </div>
+
+            {/* Show arrival countdown when renter is heading over, trip countdown when riding */}
+            {bikeStatus === 'at_garage' && arrivalCountdown && !arrivalCountdown.expired ? (
+              <div style={{ background: arrivalCountdown.secondsLeft < 300 ? '#FEE2E2' : '#FEF3C7', borderRadius: 14, padding: '14px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: arrivalCountdown.secondsLeft < 300 ? 'var(--error)' : '#92400E', marginBottom: 6 }}>RENTER ARRIVES IN</div>
+                <Clock size={18} color={arrivalCountdown.secondsLeft < 300 ? 'var(--error)' : '#F59E0B'} style={{ marginBottom: 4 }} />
+                <div style={{ fontWeight: 900, color: arrivalCountdown.secondsLeft < 300 ? 'var(--error)' : '#92400E', fontSize: 22, fontVariantNumeric: 'tabular-nums' }}>{arrivalCountdown.label}</div>
+              </div>
+            ) : bikeStatus === 'in_use' && tripCountdown ? (
+              <div style={{ background: '#D1FAE5', borderRadius: 14, padding: '14px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#065F46', marginBottom: 6 }}>TRIP TIME LEFT</div>
+                <Timer size={18} color="#10B981" style={{ marginBottom: 4 }} />
+                <div style={{ fontWeight: 900, color: '#065F46', fontSize: 22, fontVariantNumeric: 'tabular-nums' }}>{tripCountdown.label}</div>
+              </div>
+            ) : (
+              <div style={{ background: '#FEE2E2', borderRadius: 14, padding: '14px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#991B1B', marginBottom: 6 }}>TRIP DURATION</div>
+                <Timer size={20} color="#EF4444" style={{ marginBottom: 4 }} />
+                <div style={{ fontWeight: 800, color: '#EF4444', fontSize: 18 }}>{request?.estimatedDuration || '—'}h</div>
+              </div>
+            )}
           </div>
 
           <div style={{ background: 'var(--bg-color)', borderRadius: 14, padding: '14px', marginBottom: 14 }}>
@@ -146,7 +196,7 @@ function ActiveBikeModal({ bike, request, onClose }) {
                     value: request.renterNid ? `${request.renterNid.slice(0, 4)}••••${request.renterNid.slice(-4)}` : '••••••••••'
                   },
                   { icon: <Clock size={14} />, label: 'Duration', value: `${request.estimatedDuration}h` },
-                  { icon: <Activity size={14} />, label: 'Fare', value: `৳${request.estimatedFare}` },
+                  { icon: <DollarSign size={14} />, label: 'Fare', value: `৳${request.estimatedFare}` },
                 ].map(item => (
                   <div key={item.label} style={{ background: 'var(--bg-color)', borderRadius: 10, padding: '11px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', marginBottom: 4 }}>
@@ -165,9 +215,12 @@ function ActiveBikeModal({ bike, request, onClose }) {
   );
 }
 
+
+
 export default function OwnerDashboard() {
-  const { data, user } = useAuth();
+  const { data, user, acceptBookingRequest, updateBookingStatus } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [selectedBike, setSelectedBike] = useState(null);
 
   const myListings = [...data.listings]
@@ -273,7 +326,7 @@ export default function OwnerDashboard() {
                   key={req.id}
                   style={{ background: 'white', border: '2px solid #FDE68A', borderRadius: 14, padding: '14px', boxShadow: 'var(--shadow-sm)' }}
                 >
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
                     <img src={req.renterAvatar} alt={req.renterName} style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -281,8 +334,23 @@ export default function OwnerDashboard() {
                       </div>
                       <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{req.estimatedDuration}h · ৳{req.estimatedFare}</div>
                     </div>
-                    <button className="btn btn-primary btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={() => navigate('/owner/requests')}>
-                      Review
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      style={{ borderColor: 'var(--error)', color: 'var(--error)' }}
+                      onClick={() => { updateBookingStatus(req.id, 'rejected'); toast.info('Rejected', `${req.renterName}'s request rejected.`); }}
+                    >
+                      <XCircle size={14} /> Reject
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        acceptBookingRequest(req.id);
+                        toast.success('Accepted!', `${req.renterName} has been notified. They have 20 mins to arrive.`);
+                      }}
+                    >
+                      <CheckCircle2 size={14} /> Accept
                     </button>
                   </div>
                 </div>
@@ -323,18 +391,25 @@ export default function OwnerDashboard() {
             {activeScooters.map(scooter => {
               const activeReq = getActiveRequest(scooter.id);
               const bikeStatus = activeReq?.bikeStatus || 'at_garage';
+              // 'at_garage' with an accepted request means the renter is heading over
+              const isHeading = bikeStatus === 'at_garage' && activeReq?.status === 'accepted';
               const statusColors = {
-                at_garage: { color: '#3B82F6', label: 'At Garage', bg: '#DBEAFE' },
+                at_garage: isHeading
+                  ? { color: '#3B82F6', label: 'Renter Heading Over', bg: '#DBEAFE' }
+                  : { color: '#6B7280', label: 'At Garage', bg: '#F3F4F6' },
                 in_use: { color: '#10B981', label: 'In Use', bg: '#D1FAE5' },
                 returning: { color: '#F59E0B', label: 'Returning', bg: '#FEF3C7' },
                 returned: { color: '#6B7280', label: 'Returned', bg: '#F3F4F6' },
               }[bikeStatus] || { color: '#3B82F6', label: 'Active', bg: '#DBEAFE' };
 
+              const chatUrl = activeReq
+                ? `/chat?name=${encodeURIComponent(activeReq.renterName)}&context=${encodeURIComponent(scooter.vehicleName + ' booking')}&avatar=${encodeURIComponent(activeReq.renterAvatar || '')}`
+                : '/chat';
+
               return (
                 <div
                   key={scooter.id}
-                  onClick={() => setSelectedBike(scooter)}
-                  style={{ background: 'white', border: '2px solid #3B82F6', borderRadius: 14, padding: '14px', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}
+                  style={{ background: 'white', border: '2px solid #3B82F6', borderRadius: 14, padding: '14px', boxShadow: 'var(--shadow-sm)' }}
                 >
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <img src={scooter.image} alt={scooter.vehicleName} style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
@@ -351,8 +426,26 @@ export default function OwnerDashboard() {
                         </div>
                       )}
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Clock size={11} /> {activeReq?.estimatedDuration || '?'}h trip · View details <ChevronRight size={13} />
+                        <Clock size={11} /> {activeReq?.estimatedDuration || '?'}h trip
                       </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        style={{ width: 'auto' }}
+                        onClick={() => setSelectedBike(scooter)}
+                      >
+                        <Activity size={13} /> Details
+                      </button>
+                      {activeReq && (
+                        <button
+                          className="btn btn-outline btn-sm"
+                          style={{ width: 'auto' }}
+                          onClick={() => navigate(chatUrl)}
+                        >
+                          <MessageCircle size={13} /> Message
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

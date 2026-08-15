@@ -137,7 +137,10 @@ export default function Requests() {
             {isAccepted && (
               <>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate('/chat')}>
+                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
+                    const chatUrl = `/chat?name=${encodeURIComponent(req.renterName)}&context=${encodeURIComponent((vehicle?.vehicleName || 'Bike') + ' booking')}&avatar=${encodeURIComponent(req.renterAvatar || '')}`;
+                    navigate(chatUrl);
+                  }}>
                     <MessageCircle size={15} /> Message
                   </button>
                   <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => toast.info('Call', `Calling ${req.renterName}...`)}>

@@ -91,7 +91,15 @@ body {
   max-width: 1280px;
   margin: 0 auto;
   padding: var(--space-6) var(--space-4);
+  /* On mobile: leave room for bottom nav */
   padding-bottom: calc(var(--nav-height) + 24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* On desktop: no bottom nav, so no extra padding needed */
+@media (min-width: 900px) {
+  .main-content {
+    padding-bottom: var(--space-8);
+  }
 }
 
 .main-content.no-bottom-nav {
@@ -499,7 +507,7 @@ img { display: block; }
 }
 .header-back:hover { border-color: var(--primary); color: var(--primary); }
 
-/* BOTTOM NAV */
+/* BOTTOM NAV — mobile only */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -510,6 +518,13 @@ img { display: block; }
   border-top: 1px solid var(--border-color);
   display: flex;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Hide bottom nav on desktop — DesktopNav takes over */
+@media (min-width: 900px) {
+  .bottom-nav {
+    display: none;
+  }
 }
 .bottom-nav-inner {
   display: flex;
