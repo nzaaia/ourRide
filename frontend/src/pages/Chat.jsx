@@ -8,7 +8,7 @@ export default function Chat() {
   const { chatId } = useParams();
   const actualChatId = chatId || 'chat1';
   
-  const { user, messages, addMessage, data, renterBookingRequests } = useAuth();
+  const { user, messages, addMessage, data, renterBookingRequests, activePassengerRides } = useAuth();
   const [text, setText] = useState('');
   const bottomRef = useRef(null);
 
@@ -29,8 +29,12 @@ export default function Chat() {
   const relatedBooking = renterBookingRequests.find(r => r.requestId === actualChatId || r.id === actualChatId)
     || data.incomingRequests.find(r => r.id === actualChatId);
     
+  const relatedPassengerRide = activePassengerRides?.find(r => r.id === actualChatId) 
+    || (data.myActiveRideRequest?.id === actualChatId ? data.myActiveRideRequest : null);
+    
   let otherName = 'Chat';
   let otherAvatar = 'https://i.pravatar.cc/150';
+  
   if (relatedBooking) {
     if (relatedBooking.renterId === user.id || relatedBooking.renterName === user.name) {
       otherName = relatedBooking.ownerName || 'Owner';
@@ -38,6 +42,16 @@ export default function Chat() {
     } else {
       otherName = relatedBooking.renterName || 'Renter';
       otherAvatar = relatedBooking.renterAvatar || otherAvatar;
+    }
+  } else if (relatedPassengerRide) {
+    if (relatedPassengerRide.passengerId === user.id) {
+      // Current user is the passenger, chatting with renter
+      otherName = relatedPassengerRide.counterOffer?.renterName || 'Rider';
+      otherAvatar = 'https://i.pravatar.cc/150'; // Rider avatar isn't explicitly saved in ride_requests right now
+    } else {
+      // Current user is the renter, chatting with passenger
+      otherName = relatedPassengerRide.passengerName || 'Passenger';
+      otherAvatar = relatedPassengerRide.passengerAvatar || otherAvatar;
     }
   }
 

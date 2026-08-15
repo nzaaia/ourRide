@@ -5,7 +5,7 @@ import { Search, Clock, Bookmark, Star, Map, MapPin, Users, ChevronRight, Circle
 import { useToast } from '../../components/ui/Toast';
 
 export default function RenterDashboard() {
-  const { data, activePassengerRides, user, renterBookingRequests } = useAuth();
+  const { data, activePassengerRides, user, renterBookingRequests, completePassengerRide } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   
@@ -87,6 +87,44 @@ export default function RenterDashboard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Active Passenger Ride Banner */}
+      {activePassengerRides.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          {activePassengerRides.map((ride, idx) => (
+            <div key={idx} style={{
+              background: '#fff', border: `2px solid var(--primary)`, borderRadius: 18,
+              padding: '16px', display: 'flex', gap: 12, alignItems: 'center', boxShadow: 'var(--shadow-sm)',
+            }}>
+              <img src={ride.passengerAvatar} alt={ride.passengerName} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, marginBottom: 2 }}>PASSENGER PICKUP</div>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>{ride.passengerName}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <MapPin size={13} color="var(--primary)" /> {ride.pickup} → {ride.dropoff}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-outline btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={() => navigate(`/chat/${ride.id}`)}>
+                  Chat
+                </button>
+                <button 
+                  className="btn btn-primary btn-sm" 
+                  style={{ width: 'auto', flexShrink: 0, padding: '0 12px' }} 
+                  onClick={() => {
+                    if (window.confirm("Complete this drop-off?")) {
+                      completePassengerRide(ride.id);
+                      toast.success('Trip completed!', `You earned ৳${ride.estimatedFare}`);
+                    }
+                  }}
+                >
+                  Complete
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

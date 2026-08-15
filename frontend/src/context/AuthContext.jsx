@@ -86,6 +86,7 @@ export const AuthProvider = ({ children }) => {
       setData(result.data);
       setRenterBookingRequests(result.renterBookingRequests);
       setMessages(result.messages);
+      setActivePassengerRides(result.data.activePassengerRides || []);
     } catch (err) {
       console.error('Failed to load server data:', err);
     }
@@ -379,27 +380,56 @@ export const AuthProvider = ({ children }) => {
         ...prev,
         availableRideRequests: prev.availableRideRequests.map(r =>
           r.id === rideId
-            ? { ...r, status: 'counter_offered', counterOffer: { fare: offerFare, renterName } }
+            ? { ...r, status: 'counter_offered', counterOffer: { fare: offerFare, renterName, renterId: user?.id } }
             : r
         )
       })),
-      () => api.apiCounterOffer(rideId, offerFare, renterName),
+      () => api.apiCounterOffer(rideId, offerFare, renterName, user?.id),
       snap
     );
   };
 
   const acceptPassengerRide = (rideId) => {
     const snap = snapshot();
-    const ride = data.availableRideRequests.find(r => r.id === rideId);
+    const ride = data.availableRideRequests.find(r => r.id === rideId) || data.myActiveRideRequest;
+    
+    let renterIdToSave = user?.id;
+    if (role === 'passenger' && ride?.counterOffer?.renterId) {
+      renterIdToSave = ride.counterOffer.renterId;
+    }
+
     sync(
       () => {
-        if (ride) setActivePassengerRides(prev => [...prev, { ...ride, status: 'active' }]);
+        if (role === 'renter' && ride) setActivePassengerRides(prev => [...prev, { ...ride, status: 'active', counterOffer: { ...ride.counterOffer, renterId: user?.id } }]);
         setData(prev => ({
           ...prev,
           availableRideRequests: prev.availableRideRequests.filter(r => r.id !== rideId)
         }));
       },
-      () => api.apiAcceptRide(rideId),
+      () => api.apiAcceptRide(rideId, renterIdToSave),
+      snap
+    );
+  };
+
+  const cancelRideRequest = (rideId) => {
+    const snap = snapshot();
+    sync(
+      () => setData(prev => ({
+        ...prev,
+        availableRideRequests: prev.availableRideRequests.filter(r => r.id !== rideId)
+      })),
+      () => api.apiCancelRideRequest(rideId),
+      snap
+    );
+  };
+
+  const completePassengerRide = (rideId) => {
+    const snap = snapshot();
+    sync(
+      () => {
+        setActivePassengerRides(prev => prev.filter(r => r.id !== rideId));
+      },
+      () => api.apiCompletePassengerRide(rideId),
       snap
     );
   };
@@ -426,7 +456,7 @@ export const AuthProvider = ({ children }) => {
       submitBeforePhoto, submitAfterPhoto, completeTrip,
       toggleSavedBike,
       startRental, endRental,
-      submitRideRequest, makeCounterOffer, acceptPassengerRide,
+      submitRideRequest, makeCounterOffer, acceptPassengerRide, cancelRideRequest, completePassengerRide,
       addMessage
     }}>
       {children}

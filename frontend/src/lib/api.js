@@ -214,6 +214,13 @@ export async function loadSnapshot(userId) {
     availableRideRequests: ridesRes.data
       .filter((r) => r.status === 'open' || r.status === 'counter_offered')
       .map(mapRide),
+    activePassengerRides: ridesRes.data
+      .filter((r) => r.status === 'accepted' && r.counter_offer?.renterId === userId)
+      .map(mapRide),
+    myActiveRideRequest: ridesRes.data
+      .find((r) => r.passenger_id === userId && r.status === 'accepted') 
+      ? mapRide(ridesRes.data.find((r) => r.passenger_id === userId && r.status === 'accepted')) 
+      : null,
     },
     renterBookingRequests,
     messages: messagesRes.data.map(mapMessage),
@@ -425,16 +432,30 @@ export async function apiCreateRideRequest(ride) {
   if (error) throw error;
 }
 
-export async function apiCounterOffer(rideId, fare, renterName) {
+export async function apiCounterOffer(rideId, fare, renterName, renterId) {
   const { error } = await supabase
     .from('ride_requests')
-    .update({ counter_offer: { fare, renterName }, status: 'counter_offered' })
+    .update({ counter_offer: { fare, renterName, renterId }, status: 'counter_offered' })
     .eq('id', rideId);
   if (error) throw error;
 }
 
-export async function apiAcceptRide(rideId) {
-  const { error } = await supabase.from('ride_requests').update({ status: 'accepted' }).eq('id', rideId);
+export async function apiAcceptRide(rideId, renterId) {
+  const { data: ride } = await supabase.from('ride_requests').select('counter_offer').eq('id', rideId).single();
+  const counterOffer = ride?.counter_offer || {};
+  counterOffer.renterId = renterId;
+
+  const { error } = await supabase.from('ride_requests').update({ status: 'accepted', counter_offer: counterOffer }).eq('id', rideId);
+  if (error) throw error;
+}
+
+export async function apiCompletePassengerRide(rideId) {
+  const { error } = await supabase.from('ride_requests').update({ status: 'completed' }).eq('id', rideId);
+  if (error) throw error;
+}
+
+export async function apiCancelRideRequest(rideId) {
+  const { error } = await supabase.from('ride_requests').delete().eq('id', rideId);
   if (error) throw error;
 }
 
