@@ -94,6 +94,12 @@ body {
   padding-bottom: calc(var(--nav-height) + 24px + env(safe-area-inset-bottom, 0px));
 }
 
+@media (min-width: 900px) {
+  .main-content {
+    padding-bottom: var(--space-8);
+  }
+}
+
 .main-content.no-bottom-nav {
   padding-bottom: var(--space-8);
 }
@@ -511,6 +517,9 @@ img { display: block; }
   display: flex;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+@media (min-width: 900px) {
+  .bottom-nav { display: none; }
+}
 .bottom-nav-inner {
   display: flex;
   flex: 1;
@@ -620,6 +629,24 @@ img { display: block; }
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* STICKY ACTION BAR */
+.sticky-action-bar {
+  position: fixed;
+  bottom: var(--nav-height);
+  left: 0;
+  right: 0;
+  z-index: 800;
+  background: var(--surface);
+  border-top: 1px solid var(--border-color);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+}
+@media (min-width: 900px) {
+  .sticky-action-bar {
+    bottom: 0;
+  }
 }
 
 /* FILTER PILLS */

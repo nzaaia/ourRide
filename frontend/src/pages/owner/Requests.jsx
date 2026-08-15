@@ -79,6 +79,13 @@ export default function Requests() {
                 <XCircle size={16} /> Reject
               </button>
               <button
+                className="btn btn-outline btn-sm"
+                style={{ width: 'auto', flex: 1 }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/chat/${req.id}`); }}
+              >
+                <MessageCircle size={16} /> Chat
+              </button>
+              <button
                 className="btn btn-primary btn-sm"
                 style={{ width: 'auto', flex: 1 }}
                 onClick={(e) => { e.stopPropagation(); handleAccept(req.id); }}
@@ -137,7 +144,7 @@ export default function Requests() {
             {isAccepted && (
               <>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate('/chat')}>
+                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate(`/chat/${req.id}`)}>
                     <MessageCircle size={15} /> Message
                   </button>
                   <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => toast.info('Call', `Calling ${req.renterName}...`)}>

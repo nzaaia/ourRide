@@ -1,33 +1,45 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, Send, Phone } from 'lucide-react';
+import { ChevronLeft, Send, Phone, Bot } from 'lucide-react';
 
 export default function Chat() {
   const navigate = useNavigate();
-  const { user, messages, addMessage } = useAuth();
+  const { chatId } = useParams();
+  const actualChatId = chatId || 'chat1';
+  
+  const { user, messages, addMessage, data, renterBookingRequests } = useAuth();
   const [text, setText] = useState('');
   const bottomRef = useRef(null);
 
-  // Filter messages for current chat (mocking single chat for simplicity)
-  const chatMessages = messages;
+  const chatMessages = messages.filter(m => m.chatId === actualChatId);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, actualChatId]);
 
   const handleSend = (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    
-    addMessage('chat1', text, user.id);
+    addMessage(actualChatId, text, user.id);
     setText('');
-    
-    // Mock reply
-    setTimeout(() => {
-      addMessage('chat1', 'Okay, sounds good! I will be waiting.', 'other-user');
-    }, 2000);
   };
+
+  // Find other participant's name based on booking requests
+  const relatedBooking = renterBookingRequests.find(r => r.requestId === actualChatId || r.id === actualChatId)
+    || data.incomingRequests.find(r => r.id === actualChatId);
+    
+  let otherName = 'Chat';
+  let otherAvatar = 'https://i.pravatar.cc/150';
+  if (relatedBooking) {
+    if (relatedBooking.renterId === user.id || relatedBooking.renterName === user.name) {
+      otherName = relatedBooking.ownerName || 'Owner';
+      otherAvatar = relatedBooking.ownerAvatar || otherAvatar;
+    } else {
+      otherName = relatedBooking.renterName || 'Renter';
+      otherAvatar = relatedBooking.renterAvatar || otherAvatar;
+    }
+  }
 
   return (
     <div className="container" style={{ maxWidth: '600px', margin: '0 auto', padding: 0, height: '80vh', display: 'flex', flexDirection: 'column' }}>
@@ -38,16 +50,21 @@ export default function Chat() {
             <ChevronLeft size={24} />
           </button>
           <div className="flex items-center gap-3">
-            <img src="https://i.pravatar.cc/150?u=passenger" alt="Passenger" className="avatar" style={{ width: '40px', height: '40px' }} />
+            <img src={otherAvatar} alt={otherName} className="avatar" style={{ width: '40px', height: '40px' }} />
             <div>
-              <div className="font-bold">Fahim (Passenger)</div>
-              <div className="text-sm text-primary">Active ride</div>
+              <div className="font-bold">{otherName}</div>
+              <div className="text-sm text-primary">Active thread</div>
             </div>
           </div>
         </div>
-        <button className="btn btn-outline" style={{ padding: '8px', borderRadius: '50%' }}>
-          <Phone size={20} />
-        </button>
+        <div className="flex gap-2">
+          <button className="btn btn-outline" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => addMessage(actualChatId, 'Got it! See you soon.', 'other-user')} title="Simulate Reply (Demo Mode)">
+            <Bot size={20} />
+          </button>
+          <button className="btn btn-outline" style={{ padding: '8px', borderRadius: '50%' }}>
+            <Phone size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Messages Area */}

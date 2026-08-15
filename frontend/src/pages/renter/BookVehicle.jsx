@@ -39,12 +39,12 @@ export default function BookVehicle() {
     const ownerReq = {
       id: sharedId,
       vehicleId: vehicle.id,
-      renterName: user?.name || 'Nazia Putul',
-      renterAvatar: user?.avatar || 'https://i.pravatar.cc/150?u=nazia',
-      renterRating: 4.8,
-      renterPastRides: 24,
-      renterPhone: user?.phone || '01712345678',
-      renterNid: user?.nid || '9876543210123',
+      renterName: user?.name || 'Guest Renter',
+      renterAvatar: user?.avatar || 'https://i.pravatar.cc/150?u=guest',
+      renterRating: data.userRating || 4.8,
+      renterPastRides: data.pastTrips?.length || 0,
+      renterPhone: user?.phone || 'Not provided',
+      renterNid: user?.nid || 'Not provided',
       pickupLocation: vehicle.location,
       estimatedDuration: hours,
       estimatedFare: totalFare,
@@ -60,7 +60,7 @@ export default function BookVehicle() {
       vehicleImage: vehicle.image,
       ownerName: vehicle.ownerName,
       ownerAvatar: vehicle.ownerAvatar,
-      ownerPhone: '+880 1711-123456',
+      ownerPhone: 'Chat to view phone number',
       location: vehicle.location,
       exactLocation: vehicle.exactLocation,
       selectedDay,
@@ -232,12 +232,7 @@ export default function BookVehicle() {
 
       {/* Sticky bottom fare + CTA */}
       {!loading && !booked && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 800,
-          background: 'var(--surface)', borderTop: '1px solid var(--border-color)',
-          padding: '12px 16px calc(12px + env(safe-area-inset-bottom, 0px))',
-          boxShadow: '0 -4px 16px rgba(0,0,0,0.06)',
-        }}>
+        <div className="sticky-action-bar">
           <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', gap: 14, alignItems: 'center' }}>
             <div style={{ flexShrink: 0 }}>
               <div className="text-xs text-muted font-semibold">Total fare</div>

@@ -13,7 +13,7 @@ const FILTERS = [
 ];
 
 export default function Browse() {
-  const { data, toggleSavedBike, user, isAuthenticated, login } = useAuth();
+  const { data, toggleSavedBike, user, isAuthenticated, login, renterBookingRequests } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -44,7 +44,21 @@ export default function Browse() {
   });
 
   const handleBookClick = (bikeId) => {
-    if (!isAuthenticated) login('renter');
+    if (!isAuthenticated) {
+      login('renter');
+    }
+    
+    // Prevent multiple bookings
+    const hasActiveBooking = renterBookingRequests?.some(
+      r => r.status === 'pending' || r.status === 'accepted' || ['in_use', 'returning'].includes(r.bikeStatus)
+    );
+    
+    if (hasActiveBooking) {
+      toast.error('Booking in progress', 'You must complete or cancel your current ride before booking another bike.');
+      navigate('/renter/requests');
+      return;
+    }
+    
     navigate(`/renter/book/${bikeId}`);
   };
 

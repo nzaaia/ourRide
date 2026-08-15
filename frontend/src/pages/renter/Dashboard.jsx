@@ -1,12 +1,21 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Search, Clock, Bookmark, Star, Map, MapPin, Users, ChevronRight, CircleUserRound, Bike } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
 
 export default function RenterDashboard() {
-  const { data, activeRentals, activePassengerRides, user } = useAuth();
+  const { data, activePassengerRides, user, renterBookingRequests } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const realActiveRentals = renterBookingRequests.filter(r => r.bikeStatus === 'in_use' || r.bikeStatus === 'returning');
 
   const savedCount = data.savedBikes.length;
   const tripCount = (data.pastTrips || []).length;
@@ -41,26 +50,43 @@ export default function RenterDashboard() {
       </div>
 
       {/* Active rental banner */}
-      {activeRentals.length > 0 && (
+      {realActiveRentals.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          {activeRentals.map((rental, idx) => (
-            <div key={idx} style={{
-              background: '#fff', border: '2px solid var(--primary)', borderRadius: 18,
-              padding: '16px', display: 'flex', gap: 12, alignItems: 'center', boxShadow: 'var(--shadow-sm)',
-            }}>
-              <img src={rental.image} alt="" style={{ width: 64, height: 48, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, marginBottom: 2 }}>ACTIVE RIDE</div>
-                <div style={{ fontWeight: 800, fontSize: 16 }}>{rental.vehicleName}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Clock size={13} color="var(--error)" /> <span style={{ color: 'var(--error)', fontWeight: 600 }}>1h 45m left</span>
+          {realActiveRentals.map((rental, idx) => {
+            const startedAt = rental.tripStartedAt || rental.startedAt;
+            const hoursInMs = (rental.hours || 1) * 60 * 60 * 1000;
+            const endTime = new Date(new Date(startedAt).getTime() + hoursInMs);
+            const now = new Date();
+            const diffMs = endTime - now;
+            
+            let timeStr = 'Time expired';
+            let color = 'var(--error)';
+            if (diffMs > 0) {
+              const h = Math.floor(diffMs / 3600000);
+              const m = Math.floor((diffMs % 3600000) / 60000);
+              timeStr = h > 0 ? `${h}h ${m}m left` : `${m}m left`;
+              color = h > 0 ? 'var(--primary)' : '#F59E0B';
+            }
+
+            return (
+              <div key={idx} style={{
+                background: '#fff', border: `2px solid ${color}`, borderRadius: 18,
+                padding: '16px', display: 'flex', gap: 12, alignItems: 'center', boxShadow: 'var(--shadow-sm)',
+              }}>
+                <img src={rental.vehicleImage || rental.image} alt="" style={{ width: 64, height: 48, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, color: color, fontWeight: 700, marginBottom: 2 }}>ACTIVE RIDE</div>
+                  <div style={{ fontWeight: 800, fontSize: 16 }}>{rental.vehicleName}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Clock size={13} color={color} /> <span style={{ color: color, fontWeight: 600 }}>{timeStr}</span>
+                  </div>
                 </div>
+                <button className="btn btn-primary btn-sm" style={{ width: 'auto', flexShrink: 0, background: color, border: 'none' }} onClick={() => navigate('/renter/requests')}>
+                  Manage
+                </button>
               </div>
-              <button className="btn btn-primary btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={() => navigate('/passenger/search')}>
-                <Users size={14} /> Passengers
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -155,7 +181,7 @@ export default function RenterDashboard() {
       )}
 
       {/* Empty CTA */}
-      {!activeRentals.length && nearby.length === 0 && (
+      {!realActiveRentals.length && nearby.length === 0 && (
         <div style={{ background: 'var(--surface)', border: '1px dashed var(--border-color)', borderRadius: 16, padding: '36px 20px', textAlign: 'center' }}>
           <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bike size={28} color="var(--primary)" />

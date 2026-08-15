@@ -124,9 +124,14 @@ function AcceptedBikeCard({ req }) {
 
           {/* Actions by status */}
           {bikeStatus === 'accepted' && countdown && !countdown.expired && (
-            <button className="btn btn-primary" style={{ width: '100%', marginBottom: 12 }} onClick={() => setPhotoPhase('before')}>
-              <Camera size={17} /> I'm Here — Take Before Photo
-            </button>
+            <>
+              <button className="btn btn-outline" style={{ width: '100%', marginBottom: 12 }} onClick={() => navigate(`/chat/${req.requestId || req.id}`)}>
+                <MessageCircle size={17} /> Chat with Owner
+              </button>
+              <button className="btn btn-primary" style={{ width: '100%', marginBottom: 12 }} onClick={() => setPhotoPhase('before')}>
+                <Camera size={17} /> I'm Here — Take Before Photo
+              </button>
+            </>
           )}
 
           {bikeStatus === 'in_use' && (
@@ -193,7 +198,7 @@ function PendingBikeCard({ req, onMessage }) {
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.location}</div>
         <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: 16, fontVariantNumeric: 'tabular-nums' }}>৳{req.totalFare}</div>
       </div>
-      <button className="btn btn-outline btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={onMessage}>
+      <button className="btn btn-outline btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={() => onMessage(req.requestId || req.id)}>
         <MessageCircle size={14} /> Chat
       </button>
     </div>
@@ -273,7 +278,7 @@ function PassengerRequestCard({ ride, hasActiveBike, onAccept, onCounter }) {
 }
 
 export default function RenterRequests() {
-  const { renterBookingRequests, data, activeRentals, acceptPassengerRide, makeCounterOffer } = useAuth();
+  const { renterBookingRequests, data, user, acceptPassengerRide, makeCounterOffer } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [tab, setTab] = useState('sent');
@@ -282,13 +287,13 @@ export default function RenterRequests() {
   const acceptedReqs = renterBookingRequests.filter(r => r.status === 'accepted');
   const allActive = [...activeReqs, ...acceptedReqs];
 
-  const pastReqs = renterBookingRequests.filter(r => r.status === 'completed');
+  const pastReqs = renterBookingRequests.filter(r => r.status === 'completed' || r.status === 'rejected');
   const pendingReqs = renterBookingRequests.filter(r => r.status === 'pending');
 
-  const hasActiveBike = activeRentals.length > 0 || renterBookingRequests.some(r => r.bikeStatus === 'in_use' || r.bikeStatus === 'returning');
+  const hasActiveBike = renterBookingRequests.some(r => r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning') || data.listings.some(l => l.ownerId === user?.id && l.status === 'active');
   const passReqs = data.availableRideRequests;
 
-  const sentCount = renterBookingRequests.length;
+  const sentCount = activeReqs.length + acceptedReqs.length + pendingReqs.length;
   const receivedCount = passReqs.length;
   const pastSent = pastReqs.map(r => ({ ...r, type: 'sent', displayStatus: 'accepted' }));
   const pastReceived = (data.pastTrips || []).map(t => ({ ...t, type: 'received', displayStatus: 'accepted' }));
@@ -333,7 +338,7 @@ export default function RenterRequests() {
 
       {tab === 'sent' && (
         <div>
-          {renterBookingRequests.length === 0 ? (
+          {sentCount === 0 ? (
             <div className="empty-state">
               <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Bike size={28} color="var(--primary)" />
@@ -360,7 +365,7 @@ export default function RenterRequests() {
                   <div className="micro-label" style={{ marginBottom: 10 }}>Pending approval</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {pendingReqs.map(req => (
-                      <PendingBikeCard key={req.id} req={req} onMessage={() => navigate('/chat')} />
+                      <PendingBikeCard key={req.id} req={req} onMessage={(id) => navigate(`/chat/${id}`)} />
                     ))}
                   </div>
                 </div>
