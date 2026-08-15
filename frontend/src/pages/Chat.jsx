@@ -1,36 +1,77 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, Send, Phone } from 'lucide-react';
+import { ChevronLeft, Send, Phone, Bot } from 'lucide-react';
 
 export default function Chat() {
   const navigate = useNavigate();
+  const { chatId } = useParams();
   const [searchParams] = useSearchParams();
-  const { user, messages, addMessage } = useAuth();
+  const { user, messages, addMessage, data, renterBookingRequests, activePassengerRides } = useAuth();
+  
   const [text, setText] = useState('');
   const bottomRef = useRef(null);
 
-  // Read context from query params: /chat?name=Jamil&context=Suzuki+Gixxer+SF+booking&avatar=URL
-  const contactName = searchParams.get('name') || 'Your Rider';
-  const contactContext = searchParams.get('context') || 'Active booking';
-  const contactAvatar = searchParams.get('avatar') || 'https://i.pravatar.cc/150?u=default';
-
-  const chatMessages = messages;
+  const actualChatId = chatId || 'chat1';
+  const chatMessages = messages.filter(m => m.chatId === actualChatId);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, actualChatId]);
 
   const handleSend = (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    addMessage('chat1', text, user.id);
+    addMessage(actualChatId, text, user.id);
     setText('');
-    // Mock reply after 2s
-    setTimeout(() => {
-      addMessage('chat1', 'Got it! See you soon.', 'other-user');
-    }, 2000);
+    
+    // Demo Mock Reply if chatId is 'chat1'
+    if (actualChatId === 'chat1') {
+      setTimeout(() => {
+        addMessage('chat1', 'Got it! See you soon.', 'other-user');
+      }, 2000);
+    }
   };
+
+  // 1. Try taking from searchParams first (UI links)
+  let contactName = searchParams.get('name');
+  let contactContext = searchParams.get('context');
+  let contactAvatar = searchParams.get('avatar');
+
+  // 2. If not provided via UI, derive from data
+  if (!contactName) {
+    const relatedBooking = renterBookingRequests.find(r => r.requestId === actualChatId || r.id === actualChatId)
+      || data.incomingRequests.find(r => r.id === actualChatId);
+      
+    const relatedPassengerRide = activePassengerRides?.find(r => r.id === actualChatId) 
+      || (data.myActiveRideRequest?.id === actualChatId ? data.myActiveRideRequest : null);
+
+    contactName = 'Your Contact';
+    contactAvatar = 'https://i.pravatar.cc/150?u=default';
+    contactContext = 'Active thread';
+
+    if (relatedBooking) {
+      if (user.id === relatedBooking.renterId) {
+        contactName = relatedBooking.ownerName || 'Owner';
+        contactAvatar = relatedBooking.ownerAvatar || contactAvatar;
+      } else {
+        contactName = relatedBooking.renterName || 'Renter';
+        contactAvatar = relatedBooking.renterAvatar || contactAvatar;
+      }
+    } else if (relatedPassengerRide) {
+      if (user.id === relatedPassengerRide.passengerId) {
+        contactName = 'Driver';
+      } else {
+        contactName = relatedPassengerRide.passengerName || 'Passenger';
+        contactAvatar = relatedPassengerRide.passengerAvatar || contactAvatar;
+      }
+    }
+  }
+
+  // Fallbacks
+  contactName = contactName || 'Your Contact';
+  contactContext = contactContext || 'Active thread';
+  contactAvatar = contactAvatar || 'https://i.pravatar.cc/150?u=default';
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: 0, height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
@@ -55,11 +96,22 @@ export default function Chat() {
             <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contactContext}</div>
           </div>
         </div>
-        <button
-          style={{ padding: 8, borderRadius: 10, border: '1px solid var(--border-color)', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-        >
-          <Phone size={18} />
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button 
+            className="btn btn-outline" 
+            style={{ padding: 8, borderRadius: '50%' }} 
+            onClick={() => addMessage(actualChatId, 'Got it! See you soon.', 'other-user')} 
+            title="Simulate Reply (Demo Mode)"
+          >
+            <Bot size={20} />
+          </button>
+          <button
+            className="btn btn-outline"
+            style={{ padding: 8, borderRadius: '50%' }}
+          >
+            <Phone size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Messages Area */}

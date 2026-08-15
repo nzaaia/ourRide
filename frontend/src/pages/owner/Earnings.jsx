@@ -8,10 +8,6 @@ export default function Earnings() {
     <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
       <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-6)' }}>
         <h2>Earnings</h2>
-        <button className="btn btn-outline flex items-center gap-2" style={{ width: 'auto' }} onClick={() => alert('Withdrawal feature coming soon!')}>
-          <Download size={20} />
-          Withdraw Funds
-        </button>
       </div>
 
       <div className="card flex items-center justify-between" style={{ backgroundColor: 'var(--primary)', color: 'white', marginBottom: 'var(--space-6)' }}>

@@ -279,14 +279,14 @@ function PendingBikeCard({ req, onMessage, onSimulateAccept, onCancel }) {
         ⏳ Awaiting owner approval. Once accepted, the exact bike location will be revealed and you'll have 20 minutes to arrive.
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={onMessage}>
+        <button className="btn btn-outline btn-sm" style={{ flex: 1 }} onClick={() => onMessage(req.requestId || req.id)}>
           <MessageCircle size={14} /> Chat with Owner
         </button>
         <button 
           className="btn btn-outline btn-sm" 
           style={{ flex: 1, color: 'var(--error)', borderColor: 'var(--error)' }} 
           onClick={() => {
-            onCancel(req.id);
+            onCancel(req.requestId || req.id);
           }}
         >
           Cancel Request
@@ -378,24 +378,24 @@ function PassengerRequestCard({ ride, hasActiveBike, onAccept, onCounter }) {
 }
 
 export default function RenterRequests() {
-  const { renterBookingRequests, data, activeRentals, acceptPassengerRide, makeCounterOffer, acceptBookingRequest } = useAuth();
+  const { renterBookingRequests, data, activeRentals, acceptPassengerRide, makeCounterOffer, acceptBookingRequest, cancelBookingRequest, user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [tab, setTab] = useState('sent');
 
   // 'accepted' = owner accepted, 'active' = legacy alias for accepted, 'in_use'/'returning' tracked via bikeStatus
   const acceptedReqs = renterBookingRequests.filter(r =>
-    r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning'
+    r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning' || r.status === 'active'
   );
   const pendingReqs = renterBookingRequests.filter(r =>
-    r.status === 'pending' || r.status === 'active'
-  ).filter(r => r.bikeStatus !== 'in_use' && r.bikeStatus !== 'returning');
-  const pastReqs = renterBookingRequests.filter(r => r.status === 'completed');
+    r.status === 'pending'
+  );
+  const pastReqs = renterBookingRequests.filter(r => r.status === 'completed' || r.status === 'rejected');
 
-  const hasActiveBike = activeRentals.length > 0 || renterBookingRequests.some(r => r.bikeStatus === 'in_use' || r.bikeStatus === 'returning');
+  const hasActiveBike = renterBookingRequests.some(r => r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning') || data.listings.some(l => l.ownerId === user?.id && l.status === 'active');
   const passReqs = data.availableRideRequests;
 
-  const sentCount = renterBookingRequests.length;
+  const sentCount = acceptedReqs.length + pendingReqs.length;
   const receivedCount = passReqs.length;
   const pastSent = pastReqs.map(r => ({ ...r, type: 'sent', displayStatus: 'accepted' }));
   const pastReceived = (data.pastTrips || []).map(t => ({ ...t, type: 'received', displayStatus: 'accepted' }));
@@ -440,7 +440,7 @@ export default function RenterRequests() {
 
       {tab === 'sent' && (
         <div>
-          {renterBookingRequests.length === 0 ? (
+          {sentCount === 0 ? (
             <div className="empty-state">
               <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Bike size={28} color="var(--primary)" />
@@ -470,9 +470,9 @@ export default function RenterRequests() {
                       <PendingBikeCard
                         key={req.id}
                         req={req}
-                        onMessage={() => navigate('/chat')}
-                        onCancel={() => {
-                          cancelBookingRequest(req.requestId || req.id);
+                        onMessage={(id) => navigate(`/chat/${id}`)}
+                        onCancel={(id) => {
+                          cancelBookingRequest(id);
                           toast.info('Request Cancelled', 'Your pending request has been cancelled.');
                         }}
                         onSimulateAccept={() => {

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Search, Clock, Bookmark, Star, Map, MapPin, Users, ChevronRight, CircleUserRound, Bike } from 'lucide-react';
@@ -5,9 +6,17 @@ import { useToast } from '../../components/ui/Toast';
 import { AcceptedBikeCard } from './RenterRequests';
 
 export default function RenterDashboard() {
-  const { data, activeRentals, activePassengerRides, user, renterBookingRequests } = useAuth();
+  const { data, activeRentals, activePassengerRides, user, renterBookingRequests, completePassengerRide } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const realActiveRentals = renterBookingRequests.filter(r => r.bikeStatus === 'in_use' || r.bikeStatus === 'returning');
 
   const savedCount = data.savedBikes.length;
   const tripCount = (data.pastTrips || []).length;
@@ -51,25 +60,39 @@ export default function RenterDashboard() {
         </div>
       )}
 
-      {/* Legacy activeRentals banner */}
-      {activeRentals.length > 0 && renterBookingRequests.filter(r => r.bikeStatus === 'in_use').length === 0 && (
+      {/* Active Passenger Ride Banner */}
+      {activePassengerRides.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          {activeRentals.map((rental, idx) => (
+          {activePassengerRides.map((ride, idx) => (
             <div key={idx} style={{
-              background: '#fff', border: '2px solid var(--primary)', borderRadius: 18,
+              background: '#fff', border: `2px solid var(--primary)`, borderRadius: 18,
               padding: '16px', display: 'flex', gap: 12, alignItems: 'center', boxShadow: 'var(--shadow-sm)',
             }}>
-              <img src={rental.image} alt="" style={{ width: 64, height: 48, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
+              <img src={ride.passengerAvatar} alt={ride.passengerName} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: '50%', flexShrink: 0 }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, marginBottom: 2 }}>ACTIVE RIDE</div>
-                <div style={{ fontWeight: 800, fontSize: 16 }}>{rental.vehicleName}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <Clock size={13} color="var(--error)" /> <span style={{ color: 'var(--error)', fontWeight: 600 }}>1h 45m left</span>
+                <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, marginBottom: 2 }}>PASSENGER PICKUP</div>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>{ride.passengerName}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <MapPin size={13} color="var(--primary)" /> {ride.pickup} → {ride.dropoff}
                 </div>
               </div>
-              <button className="btn btn-primary btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={() => navigate('/passenger/search')}>
-                <Users size={14} /> Passengers
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-outline btn-sm" style={{ width: 'auto', flexShrink: 0 }} onClick={() => navigate(`/chat/${ride.id}`)}>
+                  Chat
+                </button>
+                <button 
+                  className="btn btn-primary btn-sm" 
+                  style={{ width: 'auto', flexShrink: 0, padding: '0 12px' }} 
+                  onClick={() => {
+                    if (window.confirm("Complete this drop-off?")) {
+                      completePassengerRide(ride.id);
+                      toast.success('Trip completed!', `You earned ৳${ride.estimatedFare}`);
+                    }
+                  }}
+                >
+                  Complete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -166,7 +189,7 @@ export default function RenterDashboard() {
       )}
 
       {/* Empty CTA */}
-      {!activeRentals.length && nearby.length === 0 && (
+      {!realActiveRentals.length && nearby.length === 0 && (
         <div style={{ background: 'var(--surface)', border: '1px dashed var(--border-color)', borderRadius: 16, padding: '36px 20px', textAlign: 'center' }}>
           <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 16, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Bike size={28} color="var(--primary)" />

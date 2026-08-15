@@ -56,11 +56,12 @@ function App() {
             <Navigate to="/passenger/search" />
           } />
 
-          {/* Public browsing routes (no login needed to view) */}
-          <Route path="/renter/browse" element={<Browse />} />
-          <Route path="/passenger/search" element={<RideSearch />} />
+          {/* Protected browsing routes */}
+          <Route path="/renter/browse" element={protectedEl(<Browse />)} />
+          <Route path="/passenger/search" element={protectedEl(<RideSearch />)} />
 
           {/* Protected shared */}
+          <Route path="/chat/:chatId" element={protectedEl(<Chat />)} />
           <Route path="/chat" element={protectedEl(<Chat />)} />
           <Route path="/profile" element={protectedEl(<ProfilePage />)} />
 

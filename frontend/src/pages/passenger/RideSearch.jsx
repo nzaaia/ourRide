@@ -6,19 +6,27 @@ import PageHeader from '../../components/ui/PageHeader';
 import { useToast } from '../../components/ui/Toast';
 
 export default function RideSearch() {
-  const { data, role, acceptPassengerRide, makeCounterOffer, activeRentals, activePassengerRides, isAuthenticated, login, submitRideRequest, user } = useAuth();
+  const { 
+    data, role, acceptPassengerRide, makeCounterOffer, 
+    activeRentals, activePassengerRides, isAuthenticated, 
+    login, submitRideRequest, user, renterBookingRequests, 
+    cancelRideRequest 
+  } = useAuth();
+  
   const toast = useToast();
   const navigate = useNavigate();
 
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
-  const [searched, setSearched] = useState(false);
-  const [myRideId, setMyRideId] = useState(null);
+  const [fare, setFare] = useState('');
   const [counterOfferAmounts, setCounterOfferAmounts] = useState({});
+
+  const isBusyWithPassenger = activePassengerRides?.some(r => r.renterId === user?.id && r.status === 'active');
 
   // ============= RENTER VIEW (looking to pick up passengers) =============
   if (role === 'renter') {
-    if (activeRentals.length === 0 && !data.listings.some(l => l.ownerId === user?.id && l.status === 'active')) {
+    const hasActiveBike = renterBookingRequests.some(r => r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning') || data.listings.some(l => l.ownerId === user?.id && l.status === 'active');
+    if (!hasActiveBike) {
       return (
         <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center', paddingTop: 48 }}>
           <div style={{ width: 64, height: 64, margin: '0 auto 16px', borderRadius: 18, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -34,12 +42,20 @@ export default function RideSearch() {
     }
 
     const handleAccept = (rideId) => {
+      if (isBusyWithPassenger) {
+        toast.error('Ride in progress', 'You must complete your current passenger ride first.');
+        return;
+      }
       acceptPassengerRide(rideId);
       toast.success('Ride accepted', 'Head to the pickup point.');
       navigate('/renter/dashboard');
     };
 
     const handleCounterOffer = (rideId) => {
+      if (isBusyWithPassenger) {
+        toast.error('Ride in progress', 'You must complete your current passenger ride first.');
+        return;
+      }
       const amount = counterOfferAmounts[rideId];
       if (!amount || isNaN(amount)) { toast.error('Invalid fare', 'Enter a valid amount first.'); return; }
       makeCounterOffer(rideId, Number(amount), user.name);
@@ -126,26 +142,30 @@ export default function RideSearch() {
     );
   }
 
-  // ============= PASSENGER / GUEST VIEW =============
+  // ============= PASSENGER VIEW =============
+  const existingRequest = data.availableRideRequests.find(r => r.passengerId === user?.id);
+  const activeRide = data.myActiveRideRequest || activePassengerRides?.find(r => r.passengerId === user?.id);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    if (!pickup || !dropoff) return;
+    if (!pickup || !dropoff || !fare) {
+      toast.error('Missing fields', 'Please provide pickup, dropoff, and your offered fare.');
+      return;
+    }
     if (!isAuthenticated) login('passenger');
-    const id = submitRideRequest(pickup, dropoff, 200);
-    setMyRideId(id);
-    setSearched(true);
+    
+    if (existingRequest || activeRide) {
+      toast.error('Request in progress', 'You already have an active ride or request.');
+      return;
+    }
+
+    submitRideRequest(pickup, dropoff, Number(fare));
     toast.success('Ride request posted', 'Riders near you can now accept or counter.');
   };
 
-  const myRequest = data.availableRideRequests.find(r => r.id === myRideId);
-  // Check if ride was accepted (moved to activePassengerRides)
-  const acceptedRide = activePassengerRides.find(r => r.id === myRideId);
-
   // === RIDE ACCEPTED STATUS SCREEN ===
-  if (acceptedRide) {
-    const chatUrl = acceptedRide.renterName
-      ? `/chat?name=${encodeURIComponent(acceptedRide.renterName)}&context=${encodeURIComponent('Your ride to ' + (acceptedRide.dropoff || 'destination'))}&avatar=${encodeURIComponent(acceptedRide.renterAvatar || '')}`
-      : '/chat';
+  if (activeRide) {
+    const chatUrl = `/chat/${activeRide.id}?name=${encodeURIComponent(activeRide.renterName || 'Driver')}&context=${encodeURIComponent('Your ride to ' + (activeRide.dropoff || 'destination'))}&avatar=${encodeURIComponent(activeRide.renterAvatar || '')}`;
     return (
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
         <PageHeader title="Ride Confirmed!" subtitle="Your rider is on the way" />
@@ -164,13 +184,13 @@ export default function RideSearch() {
         {/* Rider info */}
         <div className="card" style={{ padding: 20, marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-            {acceptedRide.renterAvatar ? (
-              <img src={acceptedRide.renterAvatar} alt={acceptedRide.renterName} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            {activeRide.renterAvatar ? (
+              <img src={activeRide.renterAvatar} alt={activeRide.renterName} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
             ) : (
               <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>🏍️</div>
             )}
             <div>
-              <div style={{ fontWeight: 800, fontSize: 18 }}>{acceptedRide.renterName || 'Your Rider'}</div>
+              <div style={{ fontWeight: 800, fontSize: 18 }}>{activeRide.renterName || 'Your Rider'}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Your assigned rider</div>
             </div>
             <button
@@ -187,21 +207,37 @@ export default function RideSearch() {
               <MapPin size={15} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 2 }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>PICKUP</div>
-                <div style={{ fontWeight: 700, fontSize: 13 }}>{acceptedRide.pickup}</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{activeRide.pickup}</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <Navigation size={15} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>DROPOFF</div>
-                <div style={{ fontWeight: 700, fontSize: 13 }}>{acceptedRide.dropoff}</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{activeRide.dropoff}</div>
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: '1px solid var(--border-color)' }}>
             <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Agreed fare</span>
-            <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>৳{acceptedRide.estimatedFare}</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>৳{activeRide.estimatedFare}</span>
+          </div>
+
+          {/* Cancel active ride functionality from bug-fixes branch */}
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)' }}>
+            <button 
+              className="btn btn-outline" 
+              style={{ width: '100%', borderColor: 'var(--error)', color: 'var(--error)' }} 
+              onClick={() => {
+                if (window.confirm("Are you sure you want to cancel this active ride?")) {
+                  cancelRideRequest(activeRide.id);
+                  toast.info('Ride cancelled', 'Your ride has been cancelled.');
+                }
+              }}
+            >
+              Cancel Ride
+            </button>
           </div>
         </div>
 
@@ -215,13 +251,22 @@ export default function RideSearch() {
     );
   }
 
-  if (searched && myRequest) {
+  const myRequest = existingRequest;
+
+  if (myRequest) {
     return (
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <PageHeader
-          title="Ride Request Sent"
-          back={() => { setSearched(false); setMyRideId(null); }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+          <button onClick={() => {
+            if (window.confirm("Cancel this ride request?")) {
+              cancelRideRequest(myRequest.id);
+              toast.info('Request cancelled', 'Your ride request has been removed.');
+            }
+          }} className="btn btn-outline btn-sm" style={{ width: 'auto' }}>
+            <ChevronLeft size={18} /> Cancel Request
+          </button>
+          <h2 style={{ marginBottom: 0 }}>Ride Request Sent</h2>
+        </div>
 
         <div className="card" style={{ padding: 20, marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -231,16 +276,16 @@ export default function RideSearch() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
               <div className="text-muted text-sm" style={{ marginBottom: 2 }}>FROM</div>
-              <div className="font-bold">{pickup}</div>
+              <div className="font-bold">{myRequest.pickup}</div>
             </div>
             <div>
               <div className="text-muted text-sm" style={{ marginBottom: 2 }}>TO</div>
-              <div className="font-bold">{dropoff}</div>
+              <div className="font-bold">{myRequest.dropoff}</div>
             </div>
           </div>
           <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span className="text-muted">Your offered fare</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>৳200</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>৳{myRequest.estimatedFare}</span>
           </div>
         </div>
 
@@ -250,11 +295,11 @@ export default function RideSearch() {
             <div className="font-semibold" style={{ marginBottom: 8 }}>{myRequest.counterOffer.renterName} offers:</div>
             <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--warning)', marginBottom: 16 }}>৳{myRequest.counterOffer.fare}</div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { acceptPassengerRide(myRideId); toast.success('Offer accepted', 'Enjoy your ride!'); navigate('/passenger/search'); }}>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { acceptPassengerRide(myRequest.id); toast.success('Offer accepted', 'Enjoy your ride!'); }}>
                 Accept Offer
               </button>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setMyRideId(null)}>
-                Decline
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => cancelRideRequest(myRequest.id)}>
+                Decline & Cancel
               </button>
             </div>
           </div>
@@ -305,9 +350,20 @@ export default function RideSearch() {
             </div>
           </div>
 
-          <div style={{ background: 'var(--bg-color)', borderRadius: 10, padding: '14px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="text-muted font-semibold">Estimated fare</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--primary)' }}>৳150 – ৳250</span>
+          <div style={{ marginBottom: 20 }}>
+            <label className="font-semibold text-sm" style={{ display: 'block', marginBottom: 8 }}>Your Offered Fare (৳)</label>
+            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid var(--border-color)', borderRadius: 12, padding: '12px 14px', gap: 10 }}>
+              <DollarSign size={18} color="var(--primary)" style={{ flexShrink: 0 }} />
+              <input
+                required
+                type="number"
+                min="0"
+                placeholder="How much are you willing to pay?"
+                value={fare}
+                onChange={e => setFare(e.target.value)}
+                style={{ border: 'none', outline: 'none', flex: 1, fontFamily: 'inherit', fontSize: 15 }}
+              />
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>

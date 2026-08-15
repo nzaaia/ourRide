@@ -79,6 +79,13 @@ export default function Requests() {
                 <XCircle size={16} /> Reject
               </button>
               <button
+                className="btn btn-outline btn-sm"
+                style={{ width: 'auto', flex: 1 }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/chat/${req.id}`); }}
+              >
+                <MessageCircle size={16} /> Chat
+              </button>
+              <button
                 className="btn btn-primary btn-sm"
                 style={{ width: 'auto', flex: 1 }}
                 onClick={(e) => { e.stopPropagation(); handleAccept(req.id); }}
@@ -138,7 +145,7 @@ export default function Requests() {
               <>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
-                    const chatUrl = `/chat?name=${encodeURIComponent(req.renterName)}&context=${encodeURIComponent((vehicle?.vehicleName || 'Bike') + ' booking')}&avatar=${encodeURIComponent(req.renterAvatar || '')}`;
+                    const chatUrl = `/chat/${req.id}?name=${encodeURIComponent(req.renterName)}&context=${encodeURIComponent((vehicle?.vehicleName || 'Bike') + ' booking')}&avatar=${encodeURIComponent(req.renterAvatar || '')}`;
                     navigate(chatUrl);
                   }}>
                     <MessageCircle size={15} /> Message
