@@ -55,6 +55,17 @@ export default function TripPhotoCapture({ phase, onCapture, onCancel }) {
     setStep('preview');
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCapturedImage(event.target.result);
+      setStep('preview');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const retake = () => {
     setCapturedImage(null);
     startCamera();
@@ -118,8 +129,7 @@ export default function TripPhotoCapture({ phase, onCapture, onCancel }) {
               }}>
                 <AlertTriangle size={18} color="#92400E" style={{ flexShrink: 0, marginTop: 1 }} />
                 <div style={{ fontSize: 13, color: '#92400E', fontWeight: 600 }}>
-                  You must use your device's camera. Pre-saved photos from your gallery are not accepted.
-                  Your camera will open directly when you click below.
+                  Take a live photo using your camera, or upload one from your gallery (demo feature).
                 </div>
               </div>
 
@@ -129,13 +139,19 @@ export default function TripPhotoCapture({ phase, onCapture, onCancel }) {
                 </div>
               )}
 
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '14px', fontSize: 16 }}
-                onClick={startCamera}
-              >
-                <Camera size={20} /> Open Camera
-              </button>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  className="btn btn-primary"
+                  style={{ flex: 1, padding: '14px', fontSize: 15 }}
+                  onClick={startCamera}
+                >
+                  <Camera size={20} /> Open Camera
+                </button>
+                <label className="btn btn-outline" style={{ flex: 1, padding: '14px', fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <Image size={20} /> Upload Photo
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+                </label>
+              </div>
             </div>
           )}
 

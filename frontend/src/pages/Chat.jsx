@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, Send, Phone, Bot } from 'lucide-react';
 
@@ -7,6 +7,7 @@ export default function Chat() {
   const navigate = useNavigate();
   const { chatId } = useParams();
   const actualChatId = chatId || 'chat1';
+  const [searchParams] = useSearchParams();
   
   const { user, messages, addMessage, data, renterBookingRequests, activePassengerRides } = useAuth();
   const [text, setText] = useState('');
@@ -56,18 +57,27 @@ export default function Chat() {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '600px', margin: '0 auto', padding: 0, height: '80vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ maxWidth: 600, margin: '0 auto', padding: 0, height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+
       {/* Header */}
-      <div className="flex justify-between items-center" style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="btn btn-outline" style={{ padding: '8px', border: 'none' }}>
-            <ChevronLeft size={24} />
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '12px 16px', borderBottom: '1px solid var(--border-color)',
+        backgroundColor: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10,
+        gap: 12
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{ padding: 8, borderRadius: 10, border: '1px solid var(--border-color)', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            <ChevronLeft size={20} />
           </button>
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <img src={otherAvatar} alt={otherName} className="avatar" style={{ width: '40px', height: '40px' }} />
-            <div>
-              <div className="font-bold">{otherName}</div>
-              <div className="text-sm text-primary">Active thread</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{otherName}</div>
+              <div style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Active thread</div>
             </div>
           </div>
         </div>
@@ -82,24 +92,33 @@ export default function Chat() {
       </div>
 
       {/* Messages Area */}
-      <div style={{ flex: 1, padding: 'var(--space-4)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', backgroundColor: 'var(--bg-color)' }}>
-        <div className="text-center text-sm text-muted mb-4">Chat securely with your passenger/rider. Do not share personal passwords.</div>
-        
+      <div style={{ flex: 1, padding: 16, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, backgroundColor: 'var(--bg-color)' }}>
+        <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', padding: '8px 0 4px' }}>
+          Chat securely. Don't share passwords or NID details.
+        </div>
+
         {chatMessages.length === 0 && (
-          <div className="text-center text-muted flex items-center justify-center h-full">No messages yet. Send a message to coordinate!</div>
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', paddingTop: 48, fontSize: 14 }}>
+            No messages yet — say hi to coordinate!
+          </div>
         )}
 
         {chatMessages.map(msg => {
           const isMe = msg.senderId === user.id;
           return (
             <div key={msg.id} style={{ display: 'flex', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+              {!isMe && (
+                <img src={contactAvatar} alt={contactName} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', marginRight: 8, alignSelf: 'flex-end', flexShrink: 0 }} />
+              )}
               <div style={{
-                maxWidth: '70%',
-                padding: '12px 16px',
-                borderRadius: isMe ? '16px 16px 0 16px' : '16px 16px 16px 0',
+                maxWidth: '72%',
+                padding: '10px 14px',
+                borderRadius: isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                 backgroundColor: isMe ? 'var(--primary)' : 'var(--surface)',
                 color: isMe ? 'white' : 'var(--text-main)',
-                boxShadow: 'var(--shadow-sm)'
+                boxShadow: 'var(--shadow-sm)',
+                fontSize: 15,
+                lineHeight: 1.5,
               }}>
                 {msg.text}
               </div>
@@ -110,16 +129,23 @@ export default function Chat() {
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSend} className="flex gap-2" style={{ padding: 'var(--space-4)', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--surface)' }}>
-        <input 
-          type="text" 
+      <form
+        onSubmit={handleSend}
+        style={{ display: 'flex', gap: 10, padding: '12px 16px', borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--surface)' }}
+      >
+        <input
+          type="text"
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="Type a message..." 
-          style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid var(--border-color)', outline: 'none' }}
+          placeholder={`Message ${contactName}...`}
+          style={{ flex: 1, padding: '10px 16px', borderRadius: 24, border: '1.5px solid var(--border-color)', outline: 'none', fontFamily: 'inherit', fontSize: 15 }}
         />
-        <button type="submit" className="btn btn-primary" style={{ borderRadius: '50%', width: '48px', height: '48px', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Send size={20} />
+        <button
+          type="submit"
+          className="btn btn-primary"
+          style={{ borderRadius: '50%', width: 46, height: 46, padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}
+        >
+          <Send size={18} />
         </button>
       </form>
     </div>

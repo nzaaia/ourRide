@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ChevronLeft, Save, Clock, MapPin, DollarSign, Sliders, CalendarDays, Lock, CheckCircle2 } from 'lucide-react';
 
 const ALL_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DEFAULT_SLOT = { from: '08:00', to: '20:00' };
 
 export default function VehicleSettings() {
   const { id } = useParams();
@@ -16,15 +17,25 @@ export default function VehicleSettings() {
 
   useEffect(() => {
     if (vehicle) {
+      // Build per-day slots from existing data or default
+      const existingSlots = vehicle.daySlots || {};
+      const availableDays = vehicle.availableDays || ALL_DAYS;
+      const slots = {};
+      availableDays.forEach(day => {
+        slots[day] = existingSlots[day] || {
+          from: vehicle.availableFrom || DEFAULT_SLOT.from,
+          to: vehicle.availableTo || DEFAULT_SLOT.to
+        };
+      });
+
       setSettings({
         isAvailable: vehicle.isAvailable,
         autoAccept: vehicle.autoAccept,
         hourlyRate: vehicle.hourlyRate,
         wearTearRate: vehicle.wearTearRate,
         maxRadiusKm: vehicle.maxRadiusKm,
-        availableDays: vehicle.availableDays || ALL_DAYS,
-        availableFrom: vehicle.availableFrom || '08:00',
-        availableTo: vehicle.availableTo || '20:00',
+        availableDays,
+        daySlots: slots,
       });
     }
   }, [vehicle]);
@@ -55,11 +66,26 @@ export default function VehicleSettings() {
   }
 
   const toggleDay = (day) => {
+    setSettings(prev => {
+      const isActive = prev.availableDays.includes(day);
+      const newDays = isActive
+        ? prev.availableDays.filter(d => d !== day)
+        : [...prev.availableDays, day];
+      const newSlots = { ...prev.daySlots };
+      if (!isActive && !newSlots[day]) {
+        newSlots[day] = { ...DEFAULT_SLOT };
+      }
+      return { ...prev, availableDays: newDays, daySlots: newSlots };
+    });
+  };
+
+  const updateSlot = (day, field, value) => {
     setSettings(prev => ({
       ...prev,
-      availableDays: prev.availableDays.includes(day)
-        ? prev.availableDays.filter(d => d !== day)
-        : [...prev.availableDays, day]
+      daySlots: {
+        ...prev.daySlots,
+        [day]: { ...prev.daySlots[day], [field]: value }
+      }
     }));
   };
 
@@ -160,66 +186,91 @@ export default function VehicleSettings() {
         </div>
       </div>
 
-      {/* Availability Schedule */}
+      {/* Availability Schedule — Per-Day Time Slots */}
       <div style={{ background: 'white', borderRadius: 20, border: '1px solid var(--border-color)', padding: '24px 28px', boxShadow: 'var(--shadow-sm)', marginBottom: 24 }}>
         <SectionTitle icon={<CalendarDays size={17} />} title="Availability Schedule" />
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>Available Days</label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {ALL_DAYS.map(day => {
-              const active = settings.availableDays.includes(day);
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>
+          Select available days — set hours for each
+        </label>
+
+        {/* Day toggle buttons */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+          {ALL_DAYS.map(day => {
+            const active = settings.availableDays.includes(day);
+            return (
+              <button
+                key={day}
+                onClick={() => toggleDay(day)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 10,
+                  border: `2px solid ${active ? 'var(--primary)' : 'var(--border-color)'}`,
+                  background: active ? 'var(--primary)' : 'white',
+                  color: active ? 'white' : 'var(--text-muted)',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Per-day time slots */}
+        {settings.availableDays.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {ALL_DAYS.filter(d => settings.availableDays.includes(d)).map(day => {
+              const slot = settings.daySlots[day] || DEFAULT_SLOT;
               return (
-                <button
+                <div
                   key={day}
-                  onClick={() => toggleDay(day)}
                   style={{
-                    padding: '8px 16px',
+                    display: 'grid',
+                    gridTemplateColumns: '52px 1fr 1fr',
+                    gap: 12,
+                    alignItems: 'center',
+                    padding: '12px 14px',
+                    background: 'var(--bg-color)',
                     borderRadius: 10,
-                    border: `2px solid ${active ? 'var(--primary)' : 'var(--border-color)'}`,
-                    background: active ? 'var(--primary)' : 'white',
-                    color: active ? 'white' : 'var(--text-muted)',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
+                    border: '1px solid var(--border-color)'
                   }}
                 >
-                  {day}
-                </button>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--primary)' }}>{day}</div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Clock size={10} /> FROM
+                    </div>
+                    <input
+                      type="time"
+                      className="input"
+                      value={slot.from}
+                      onChange={e => updateSlot(day, 'from', e.target.value)}
+                      style={{ padding: '8px 10px', fontSize: 14 }}
+                    />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Clock size={10} /> UNTIL
+                    </div>
+                    <input
+                      type="time"
+                      className="input"
+                      value={slot.to}
+                      onChange={e => updateSlot(day, 'to', e.target.value)}
+                      style={{ padding: '8px 10px', fontSize: 14 }}
+                    />
+                  </div>
+                </div>
               );
             })}
           </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
-              <Clock size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />Available From
-            </label>
-            <input
-              type="time"
-              className="input"
-              value={settings.availableFrom}
-              onChange={e => setSettings(s => ({ ...s, availableFrom: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>
-              <Clock size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />Available Until
-            </label>
-            <input
-              type="time"
-              className="input"
-              value={settings.availableTo}
-              onChange={e => setSettings(s => ({ ...s, availableTo: e.target.value }))}
-            />
-          </div>
-        </div>
-
-        {settings.availableDays.length > 0 && (
-          <div style={{ marginTop: 16, padding: '12px 16px', background: 'var(--primary-light)', borderRadius: 10, fontSize: 13, color: '#065F46', fontWeight: 600 }}>
-            <CheckCircle2 size={15} /> Bike available: {settings.availableDays.join(', ')} · {settings.availableFrom} – {settings.availableTo}
+        ) : (
+          <div style={{ padding: '14px 16px', background: '#FEF3C7', borderRadius: 10, fontSize: 13, color: '#92400E', fontWeight: 600 }}>
+            ⚠ Select at least one day to list this bike as available.
           </div>
         )}
       </div>

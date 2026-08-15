@@ -210,29 +210,88 @@ export const AuthProvider = ({ children }) => {
   const acceptBookingRequest = (reqId) => {
     const snap = snapshot();
     const acceptedAt = new Date().toISOString();
+    // Find the incoming request to get the vehicleId
+    const incomingReq = data.incomingRequests.find(r => r.id === reqId);
+    const vehicleId = incomingReq?.vehicleId;
     sync(
       () => {
-        setData(prev => ({
-          ...prev,
-          incomingRequests: prev.incomingRequests.map(r =>
-            r.id === reqId
-              ? { ...r, status: 'accepted', locationRevealed: true, acceptedAt }
-              : r
-          )
+        setData(prev => {
+          const vId = prev.incomingRequests.find(r => r.id === reqId)?.vehicleId || vehicleId;
+          return {
+            ...prev,
+            incomingRequests: prev.incomingRequests.map(r =>
+              r.id === reqId
+                ? { ...r, status: 'accepted', locationRevealed: true, acceptedAt }
+                : r
+            ),
+            // Mark the listing as active so it shows in Owner Active Bikes
+            listings: vId
+              ? prev.listings.map(l =>
+                  l.id === vId ? { ...l, status: 'active', isAvailable: false } : l
+                )
+              : prev.listings
+          };
+        });
+        // Update renter's booking request: match by requestId OR id for the accepted one.
+        // For all other pending requests from this renter, mark them as 'cancelled' 
+        // to ensure only 1 active booking at a time.
+        setRenterBookingRequests(prev => prev.map(r => {
+          if (r.requestId === reqId || r.id === reqId) {
+            return { ...r, status: 'accepted', bikeStatus: 'at_garage', locationRevealed: true, acceptedAt };
+          }
+          if (r.status === 'pending' || r.status === 'active') {
+            return { ...r, status: 'cancelled' };
+          }
+          return r;
         }));
-        setRenterBookingRequests(prev => prev.map(r =>
-          r.requestId === reqId
-            ? { ...r, status: 'accepted', locationRevealed: true, acceptedAt }
-            : r
-        ));
       },
-      () => api.apiUpdateBookingStatus(reqId, { status: 'accepted', acceptedAt, locationRevealed: true }),
+      () => {
+        const p = api.apiUpdateBookingStatus(reqId, { status: 'accepted', acceptedAt, locationRevealed: true });
+        // Find vId from the current state rather than the old snapshot just in case
+        const vId = data.incomingRequests.find(r => r.id === reqId)?.vehicleId || incomingReq?.vehicleId;
+        if (vId) return Promise.all([p, api.apiUpdateListing(vId, { status: 'active', isAvailable: false })]);
+        return p;
+      },
       snap
     );
   };
 
   const updateRenterBookingStatus = (reqId, status) => {
     setRenterBookingRequests(prev => prev.map(r => r.id === reqId ? { ...r, status } : r));
+  };
+
+  const cancelBookingRequest = (reqId) => {
+    const snap = snapshot();
+    const target = renterBookingRequests.find(r => r.requestId === reqId || r.id === reqId);
+    const vehicleId = target?.vehicleId;
+    
+    sync(
+      () => {
+        // Cancel the booking for the renter
+        setRenterBookingRequests(prev => prev.map(r =>
+          (r.requestId === reqId || r.id === reqId) ? { ...r, status: 'cancelled' } : r
+        ));
+        // Also cancel it for the owner's incoming requests view
+        setData(prev => ({
+          ...prev,
+          incomingRequests: prev.incomingRequests.map(r => 
+            (r.id === reqId) ? { ...r, status: 'cancelled' } : r
+          ),
+          // If the booking was accepted, free up the vehicle again
+          listings: (target?.status === 'accepted' && vehicleId)
+            ? prev.listings.map(l => l.id === vehicleId ? { ...l, status: 'available', isAvailable: true } : l)
+            : prev.listings
+        }));
+      },
+      () => {
+        const p = api.apiUpdateBookingStatus(reqId, { status: 'cancelled' });
+        if (target?.status === 'accepted' && vehicleId) {
+          return Promise.all([p, api.apiUpdateListing(vehicleId, { status: 'available', isAvailable: true })]);
+        }
+        return p;
+      },
+      snap
+    );
   };
 
   const submitBeforePhoto = (reqId, photoDataUrl) => {
@@ -317,6 +376,50 @@ export const AuthProvider = ({ children }) => {
       }),
       snap
     );
+  };
+
+  // === Request More Time ===
+  // Returns { granted, newDuration, newFare }
+  const requestMoreTime = (reqId, extraHours = 1) => {
+    const target = renterBookingRequests.find(r => r.requestId === reqId || r.id === reqId);
+    if (!target) return { granted: false, reason: 'Booking not found' };
+
+    // Check if the vehicle has any accepted booking immediately after this one
+    const vehicleId = target.vehicleId;
+    const tripEnd = new Date(
+      new Date(target.tripStartedAt || target.acceptedAt).getTime() +
+      (target.estimatedDuration || target.hours || 1) * 3600000
+    );
+    const extensionEnd = new Date(tripEnd.getTime() + extraHours * 3600000);
+
+    // Check for conflicting booking (any accepted booking on same vehicle that starts before extensionEnd)
+    const conflict = data.incomingRequests.find(r =>
+      r.vehicleId === vehicleId &&
+      r.id !== reqId &&
+      r.status === 'accepted' &&
+      r.selectedDay && r.selectedTime
+    );
+
+    // No conflict — grant extension
+    if (!conflict) {
+      const newDuration = (target.estimatedDuration || target.hours || 1) + extraHours;
+      const newFare = Math.round(target.totalFare / (target.estimatedDuration || target.hours || 1) * newDuration);
+      setRenterBookingRequests(prev => prev.map(r =>
+        (r.requestId === reqId || r.id === reqId)
+          ? { ...r, estimatedDuration: newDuration, hours: newDuration, totalFare: newFare, timeExtended: true }
+          : r
+      ));
+      setData(prev => ({
+        ...prev,
+        incomingRequests: prev.incomingRequests.map(r =>
+          r.id === reqId ? { ...r, estimatedDuration: newDuration } : r
+        )
+      }));
+      return { granted: true, newDuration, newFare };
+    }
+
+    // Has conflict — deny
+    return { granted: false, reason: 'Vehicle is booked right after your slot' };
   };
 
   // === Saved Bikes ===
@@ -452,8 +555,8 @@ export const AuthProvider = ({ children }) => {
       toggleRole, logout, login,
       addListing, updateListing,
       addBookingRequest, updateBookingStatus, acceptBookingRequest,
-      addRenterBookingRequest, updateRenterBookingStatus,
-      submitBeforePhoto, submitAfterPhoto, completeTrip,
+      addRenterBookingRequest, updateRenterBookingStatus, cancelBookingRequest,
+      submitBeforePhoto, submitAfterPhoto, completeTrip, requestMoreTime,
       toggleSavedBike,
       startRental, endRental,
       submitRideRequest, makeCounterOffer, acceptPassengerRide, cancelRideRequest, completePassengerRide,

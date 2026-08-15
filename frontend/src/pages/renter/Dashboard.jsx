@@ -3,9 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Search, Clock, Bookmark, Star, Map, MapPin, Users, ChevronRight, CircleUserRound, Bike } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
+import { AcceptedBikeCard } from './RenterRequests';
 
 export default function RenterDashboard() {
-  const { data, activePassengerRides, user, renterBookingRequests, completePassengerRide } = useAuth();
+  const { data, activeRentals, activePassengerRides, user, renterBookingRequests, completePassengerRide } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   
@@ -49,8 +50,18 @@ export default function RenterDashboard() {
         </div>
       </div>
 
-      {/* Active rental banner */}
-      {realActiveRentals.length > 0 && (
+      {/* Active trip banner — bookings accepted by owner (20-min arrival countdown) */}
+      {renterBookingRequests.filter(r => r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning').length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div className="micro-label" style={{ marginBottom: 10 }}>Your Active Trip</div>
+          {renterBookingRequests.filter(r => r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning').map((req, idx) => (
+            <AcceptedBikeCard key={req.id || idx} req={req} />
+          ))}
+        </div>
+      )}
+
+      {/* Legacy activeRentals banner */}
+      {activeRentals.length > 0 && renterBookingRequests.filter(r => r.bikeStatus === 'in_use').length === 0 && (
         <div style={{ marginBottom: 20 }}>
           {realActiveRentals.map((rental, idx) => {
             const startedAt = rental.tripStartedAt || rental.startedAt;

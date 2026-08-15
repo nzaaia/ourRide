@@ -158,29 +158,67 @@ export default function RideSearch() {
     toast.success('Ride request posted', 'Riders near you can now accept or counter.');
   };
 
+  // === RIDE ACCEPTED STATUS SCREEN ===
   if (activeRide) {
     return (
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
-        <PageHeader title="Ride Accepted!" subtitle="A rider is on their way." />
-        <div className="card" style={{ padding: 20, marginBottom: 16, border: '2px solid var(--primary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <CheckCircle size={18} color="var(--primary)" />
-            <span className="font-bold text-primary">Ride Active</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <PageHeader title="Ride Confirmed!" subtitle="Your rider is on the way" />
+
+        {/* Status Banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, var(--forest) 0%, var(--primary) 100%)',
+          borderRadius: 20, padding: '24px 20px', marginBottom: 16, color: 'white', textAlign: 'center'
+        }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🏍️</div>
+          <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.8, marginBottom: 6 }}>STATUS</div>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>Rider is heading to you</div>
+          <div style={{ fontSize: 13, opacity: 0.75, marginTop: 6 }}>Stay at your pickup location and watch for your rider</div>
+        </div>
+
+        {/* Rider info */}
+        <div className="card" style={{ padding: 20, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+            {activeRide.counterOffer?.renterAvatar ? (
+              <img src={activeRide.counterOffer.renterAvatar} alt={activeRide.counterOffer.renterName} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>🏍️</div>
+            )}
             <div>
-              <div className="text-muted text-sm" style={{ marginBottom: 2 }}>FROM</div>
-              <div className="font-bold">{activeRide.pickup}</div>
+              <div style={{ fontWeight: 800, fontSize: 18 }}>{activeRide.counterOffer?.renterName || 'Your Rider'}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Your assigned rider</div>
             </div>
-            <div>
-              <div className="text-muted text-sm" style={{ marginBottom: 2 }}>TO</div>
-              <div className="font-bold">{activeRide.dropoff}</div>
-            </div>
-          </div>
-          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate(`/chat/${activeRide.id}`)}>
-              <MessageCircle size={18} /> Chat with Rider
+            <button
+              className="btn btn-primary"
+              style={{ width: 'auto', marginLeft: 'auto' }}
+              onClick={() => navigate(`/chat/${activeRide.id}`)}
+            >
+              <MessageCircle size={16} /> Message
             </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '14px', background: 'var(--bg-color)', borderRadius: 12, marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <MapPin size={15} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>PICKUP</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{activeRide.pickup}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Navigation size={15} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 1 }}>DROPOFF</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{activeRide.dropoff}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: '1px solid var(--border-color)' }}>
+            <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Agreed fare</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', fontVariantNumeric: 'tabular-nums' }}>৳{activeRide.counterOffer?.fare || activeRide.estimatedFare}</span>
+          </div>
+          
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)' }}>
             <button 
               className="btn btn-outline" 
               style={{ width: '100%', borderColor: 'var(--error)', color: 'var(--error)' }} 
@@ -194,6 +232,13 @@ export default function RideSearch() {
               Cancel Ride
             </button>
           </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '12px', background: 'var(--primary-light)', borderRadius: 12 }}>
+          <CheckCircle size={16} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <p style={{ fontSize: 13, color: '#065F46', marginBottom: 0 }}>
+            Use the Message button to coordinate your exact pickup spot. Your ride is confirmed — no need to rebook.
+          </p>
         </div>
       </div>
     );
