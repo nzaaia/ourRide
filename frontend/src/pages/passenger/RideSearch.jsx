@@ -177,9 +177,21 @@ export default function RideSearch() {
               <div className="font-bold">{activeRide.dropoff}</div>
             </div>
           </div>
-          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)' }}>
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate(`/chat/${activeRide.id}`)}>
               <MessageCircle size={18} /> Chat with Rider
+            </button>
+            <button 
+              className="btn btn-outline" 
+              style={{ width: '100%', borderColor: 'var(--error)', color: 'var(--error)' }} 
+              onClick={() => {
+                if (window.confirm("Are you sure you want to cancel this active ride?")) {
+                  cancelRideRequest(activeRide.id);
+                  toast.info('Ride cancelled', 'Your ride has been cancelled.');
+                }
+              }}
+            >
+              Cancel Ride
             </button>
           </div>
         </div>
