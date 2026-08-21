@@ -1,8 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Camera, MapPin, Loader2 } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
+import './CreateListing.css';
 
 export default function CreateListing() {
   const { addListing, user } = useAuth();
@@ -58,7 +59,7 @@ export default function CreateListing() {
       toast.error('Missing fields', 'Please fill in all required fields and upload an image.');
       return;
     }
-    
+
     setLoading(true);
     try {
       const newListing = {
@@ -89,70 +90,67 @@ export default function CreateListing() {
   };
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto' }}>
-      <div className="flex items-center gap-4" style={{ marginBottom: 24 }}>
+    <div className="create-listing">
+      <div className="flex items-center gap-4 create-listing__header">
         <button onClick={() => navigate(-1)} className="btn btn-outline btn-sm" style={{ width: 'auto' }}>
           <ChevronLeft size={18} /> Back
         </button>
-        <h2 style={{ marginBottom: 0 }}>List a Bike</h2>
+        <h2 className="create-listing__title">List a Bike</h2>
       </div>
 
-      <div className="card" style={{ padding: '24px' }}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          
+      <div className="card create-listing__card">
+        <form onSubmit={handleSubmit} className="create-listing__form">
+
           <div>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Bike Photo *</label>
-            <div style={{
-              border: '2px dashed var(--border-color)', borderRadius: 12, padding: formData.image ? 0 : 32,
-              textAlign: 'center', cursor: 'pointer', position: 'relative', overflow: 'hidden'
-            }}>
+            <label className="create-listing__label">Bike Photo *</label>
+            <div className={`create-listing__photo-zone${formData.image ? '' : ' create-listing__photo-zone--empty'}`}>
               {formData.image ? (
-                <img src={formData.image} alt="Preview" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />
+                <img src={formData.image} alt="Preview" className="create-listing__photo-preview" />
               ) : (
                 <>
                   <Camera size={32} color="var(--text-muted)" style={{ margin: '0 auto 8px' }} />
                   <div className="text-muted text-sm">Tap to upload picture</div>
                 </>
               )}
-              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="create-listing__photo-input" />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Vehicle Name *</label>
+            <label className="create-listing__label">Vehicle Name *</label>
             <input type="text" className="input" placeholder="e.g. Yamaha R15 V3" value={formData.vehicleName} onChange={e => setFormData({ ...formData, vehicleName: e.target.value })} required />
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Pickup Location *</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input type="text" className="input" style={{ flex: 1 }} placeholder="e.g. Gate B, BUET" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} required />
-              <button type="button" className="btn btn-outline" style={{ width: 'auto', padding: '0 16px' }} onClick={getLocation} disabled={locating}>
+            <label className="create-listing__label">Pickup Location *</label>
+            <div className="create-listing__location-row">
+              <input type="text" className="input create-listing__location-input" placeholder="e.g. Gate B, BUET" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} required />
+              <button type="button" className="btn btn-outline create-listing__location-btn" onClick={getLocation} disabled={locating}>
                 {locating ? <Loader2 size={18} className="spin" /> : <MapPin size={18} />}
               </button>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="create-listing__rate-grid">
             <div>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Hourly Rate (৳) *</label>
+              <label className="create-listing__label">Hourly Rate (৳) *</label>
               <input type="number" className="input" value={formData.hourlyRate} onChange={e => setFormData({ ...formData, hourlyRate: e.target.value })} required min="0" />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>Wear & Tear/hr (৳) *</label>
+              <label className="create-listing__label">Wear &amp; Tear/hr (৳) *</label>
               <input type="number" className="input" value={formData.wearTearRate} onChange={e => setFormData({ ...formData, wearTearRate: e.target.value })} required min="0" />
             </div>
           </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', marginTop: 8, padding: 16, background: 'var(--bg-color)', borderRadius: 12 }}>
-            <input type="checkbox" style={{ width: 20, height: 20, accentColor: 'var(--primary)' }} checked={formData.autoAccept} onChange={e => setFormData({ ...formData, autoAccept: e.target.checked })} />
+          <label className="create-listing__auto-accept">
+            <input type="checkbox" className="create-listing__auto-accept-checkbox" checked={formData.autoAccept} onChange={e => setFormData({ ...formData, autoAccept: e.target.checked })} />
             <div>
-              <div style={{ fontWeight: 600 }}>Auto-accept Bookings</div>
+              <div className="create-listing__auto-accept-title">Auto-accept Bookings</div>
               <div className="text-muted text-sm">Automatically approve requests</div>
             </div>
           </label>
 
-          <button type="submit" className="btn btn-primary btn-lg" style={{ marginTop: 8 }} disabled={loading}>
+          <button type="submit" className="btn btn-primary btn-lg create-listing__submit-btn" disabled={loading}>
             {loading ? <Loader2 size={20} className="spin" /> : 'Publish Listing'}
           </button>
         </form>

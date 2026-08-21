@@ -1,0 +1,108 @@
+/* ============================
+   CreateListing Styles
+   ============================ */
+
+.create-listing {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.create-listing__header {
+  margin-bottom: 24px;
+}
+
+.create-listing__title {
+  margin-bottom: 0;
+}
+
+.create-listing__card {
+  padding: 24px;
+}
+
+.create-listing__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Photo upload zone */
+.create-listing__label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.create-listing__photo-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.create-listing__photo-zone--empty {
+  padding: 32px;
+}
+
+.create-listing__photo-preview {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.create-listing__photo-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Location row */
+.create-listing__location-row {
+  display: flex;
+  gap: 8px;
+}
+
+.create-listing__location-input {
+  flex: 1;
+}
+
+.create-listing__location-btn {
+  width: auto;
+  padding: 0 16px;
+}
+
+/* Rate grid */
+.create-listing__rate-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Auto-accept toggle */
+.create-listing__auto-accept {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-top: 8px;
+  padding: 16px;
+  background: var(--bg-color);
+  border-radius: 12px;
+}
+
+.create-listing__auto-accept-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.create-listing__auto-accept-title {
+  font-weight: 600;
+}
+
+.create-listing__submit-btn {
+  margin-top: 8px;
+}

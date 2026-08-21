@@ -8,6 +8,7 @@ import {
 import TripPhotoCapture from './TripPhotoCapture';
 import PageHeader from '../../components/ui/PageHeader';
 import { useToast } from '../../components/ui/Toast';
+import './RenterRequests.css';
 
 // Countdown timer hook
 function useCountdown(startIso, limitMinutes = 20) {
@@ -70,32 +71,28 @@ export function AcceptedBikeCard({ req }) {
         />
       )}
 
-      <div style={{
-        background: 'white',
-        border: `2px solid ${statusMeta.color}`,
-        borderRadius: 18, overflow: 'hidden', boxShadow: 'var(--shadow-sm)', marginBottom: 16
-      }}>
+      <div className="accepted-bike-card" style={{ borderColor: statusMeta.color }}>
         {/* Image header */}
-        <div style={{ position: 'relative' }}>
-          <img src={req.vehicleImage} alt={req.vehicleName} style={{ width: '100%', height: 150, objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)' }} />
-          <div style={{ position: 'absolute', bottom: 12, left: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700 }}>
+        <div className="accepted-bike-card__image-wrapper">
+          <img src={req.vehicleImage} alt={req.vehicleName} className="accepted-bike-card__image" />
+          <div className="accepted-bike-card__image-gradient" />
+          <div className="accepted-bike-card__image-meta">
+            <span className="accepted-bike-card__status-label">
               {statusMeta.icon} {statusMeta.label}
             </span>
-            <h4 style={{ color: 'white', margin: 0, fontSize: 18 }}>{req.vehicleName}</h4>
+            <h4 className="accepted-bike-card__vehicle-name">{req.vehicleName}</h4>
           </div>
         </div>
 
-        <div style={{ padding: '16px' }}>
+        <div className="accepted-bike-card__body">
 
           {/* Location revealed */}
-          <div style={{ background: 'var(--primary-light)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div className="accepted-bike-card__location">
+            <div className="accepted-bike-card__location-header">
               <MapPin size={12} /> EXACT PICKUP LOCATION
             </div>
             {locationLines.map((line, i) => (
-              <div key={i} style={{ fontWeight: i === 0 ? 700 : 500, fontSize: i === 0 ? 15 : 12, color: i === 0 ? 'var(--text-main)' : 'var(--text-muted)', marginBottom: 2 }}>{line}</div>
+              <div key={i} className={i === 0 ? 'accepted-bike-card__location-line--primary' : 'accepted-bike-card__location-line--secondary'}>{line}</div>
             ))}
           </div>
 
