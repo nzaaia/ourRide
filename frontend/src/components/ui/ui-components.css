@@ -1,0 +1,68 @@
+/* ============================
+   UI Components Styles
+   ============================ */
+
+/* ---- Skeleton base ---- */
+/*
+  The base <Skeleton> uses CSS custom properties set via inline style
+  so that width / height / radius remain configurable from JSX props.
+  Only structural layout classes live here.
+*/
+.skeleton-el {
+  width: var(--sk-w, 100%);
+  height: var(--sk-h, 14px);
+  border-radius: var(--sk-r, 8px);
+}
+
+/* ---- BikeTileSkeleton ---- */
+.skeleton-tile-body {
+  gap: 8px;
+}
+
+/* ---- ListSkeleton ---- */
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-list__row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.skeleton-list__avatar {
+  flex-shrink: 0;
+}
+
+.skeleton-list__lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---- PageHeader ---- */
+.page-header__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-header__title--with-subtitle {
+  margin-bottom: 2px;
+}
+
+.page-header__title--no-subtitle {
+  margin-bottom: 0;
+}
+
+.page-header__subtitle {
+  margin-bottom: 0;
+}

@@ -1,0 +1,77 @@
+/* ============================
+   RideCard Styles
+   ============================ */
+
+.ride-card {
+  margin-bottom: var(--space-4);
+}
+
+.ride-card__header {
+  margin-bottom: var(--space-3);
+}
+
+.ride-card__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.ride-card__driver-name {
+  font-size: 16px;
+  margin: 0;
+}
+
+.ride-card__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ride-card__fare {
+  font-size: 18px;
+  color: var(--primary);
+}
+
+.ride-card__route {
+  margin-bottom: var(--space-4);
+  position: relative;
+  padding-left: var(--space-4);
+}
+
+.ride-card__route-line {
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background-color: var(--border-color);
+}
+
+.ride-card__route-point {
+  position: relative;
+}
+
+.ride-card__route-dot--origin {
+  position: absolute;
+  left: -16px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--primary);
+}
+
+.ride-card__route-dot--destination {
+  position: absolute;
+  left: -16px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  background-color: white;
+}
+
+.ride-card__destination {
+  margin-top: var(--space-2);
+}

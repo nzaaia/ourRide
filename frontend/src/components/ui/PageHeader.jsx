@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import './ui-components.css';
 
 export default function PageHeader({ title, back, subtitle, action }) {
   const navigate = useNavigate();
@@ -11,11 +12,11 @@ export default function PageHeader({ title, back, subtitle, action }) {
           <ChevronLeft size={20} />
         </button>
       )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h2 style={{ marginBottom: subtitle ? 2 : 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <div className="page-header__content">
+        <h2 className={`page-header__title ${subtitle ? 'page-header__title--with-subtitle' : 'page-header__title--no-subtitle'}`}>
           {title}
         </h2>
-        {subtitle && <p className="text-muted text-sm" style={{ marginBottom: 0 }}>{subtitle}</p>}
+        {subtitle && <p className="text-muted text-sm page-header__subtitle">{subtitle}</p>}
       </div>
       {action}
     </div>
