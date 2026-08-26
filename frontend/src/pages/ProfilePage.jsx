@@ -80,10 +80,10 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Stats row overlapping the header */}
+      {/* Stats row */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 1, marginTop: -28, marginBottom: 20,
+        gap: 1, marginTop: 16, marginBottom: 20,
         background: 'var(--border-color)', borderRadius: 14,
         overflow: 'hidden', boxShadow: 'var(--shadow-md)',
         border: '1px solid var(--border-color)'

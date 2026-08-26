@@ -27,7 +27,7 @@ export default function SavedBikes() {
           </button>
         </div>
       ) : (
-        <div className="cards-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
           {saved.map(bike => (
             <div key={bike.id} className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <div style={{ position: 'relative' }}>

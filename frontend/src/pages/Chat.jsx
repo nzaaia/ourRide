@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, Send, Phone, Bot } from 'lucide-react';
+import { ChevronLeft, Send, Phone } from 'lucide-react';
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -24,13 +24,6 @@ export default function Chat() {
     if (!text.trim()) return;
     addMessage(actualChatId, text, user.id);
     setText('');
-    
-    // Demo Mock Reply if chatId is 'chat1'
-    if (actualChatId === 'chat1') {
-      setTimeout(() => {
-        addMessage('chat1', 'Got it! See you soon.', 'other-user');
-      }, 2000);
-    }
   };
 
   // 1. Try taking from searchParams first (UI links)
@@ -97,14 +90,6 @@ export default function Chat() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button 
-            className="btn btn-outline" 
-            style={{ padding: 8, borderRadius: '50%' }} 
-            onClick={() => addMessage(actualChatId, 'Got it! See you soon.', 'other-user')} 
-            title="Simulate Reply (Demo Mode)"
-          >
-            <Bot size={20} />
-          </button>
           <button
             className="btn btn-outline"
             style={{ padding: 8, borderRadius: '50%' }}

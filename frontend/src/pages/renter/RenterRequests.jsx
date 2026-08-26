@@ -33,7 +33,7 @@ function useCountdown(startIso, limitMinutes = 20) {
 }
 
 export function AcceptedBikeCard({ req }) {
-  const { submitBeforePhoto, submitAfterPhoto, completeTrip, requestMoreTime, cancelBookingRequest } = useAuth();
+  const { submitBeforePhoto, submitAfterPhoto, completeTrip, requestMoreTime, cancelBookingRequest, activePassengerRides } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   const arrivalCountdown = useCountdown(req.acceptedAt, 20); // 20-min window to reach bike
@@ -54,7 +54,7 @@ export function AcceptedBikeCard({ req }) {
   }[bikeStatus] || { icon: null, label: bikeStatus.toUpperCase(), color: 'var(--text-muted)' };
 
   // Build chat URL with owner context
-  const ownerChatUrl = `/chat?name=${encodeURIComponent(req.ownerName || 'Owner')}&context=${encodeURIComponent((req.vehicleName || 'Bike') + ' booking')}&avatar=${encodeURIComponent(req.ownerAvatar || '')}`;
+  const ownerChatUrl = `/chat/${req.requestId || req.id}`;
 
   return (
     <>
@@ -241,7 +241,14 @@ export function AcceptedBikeCard({ req }) {
                 </div>
                 <DollarSign size={26} color="var(--primary)" />
               </div>
-              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { completeTrip(req.requestId || req.id); toast.success('Trip completed', 'Payment confirmed. Please rate the owner.'); }}>
+              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { 
+                if (activePassengerRides && activePassengerRides.length > 0) {
+                  toast.error('Action Blocked', 'You must complete your active passenger ride before returning the bike.');
+                  return;
+                }
+                completeTrip(req.requestId || req.id); 
+                toast.success('Trip completed', 'Payment confirmed. Please rate the owner.'); 
+              }}>
                 <CheckCircle2 size={17} /> Confirm Payment & Complete Trip
               </button>
             </>
@@ -254,7 +261,7 @@ export function AcceptedBikeCard({ req }) {
 }
 
 
-function PendingBikeCard({ req, onMessage, onSimulateAccept, onCancel }) {
+function PendingBikeCard({ req, onMessage, onCancel }) {
   return (
     <div style={{
       background: 'white', border: '1.5px solid #FDE68A',
@@ -289,15 +296,6 @@ function PendingBikeCard({ req, onMessage, onSimulateAccept, onCancel }) {
           Cancel Request
         </button>
       </div>
-      {onSimulateAccept && (
-        <button
-          className="btn btn-primary btn-sm"
-          style={{ width: '100%', marginTop: 8, background: '#8B5CF6', borderColor: '#8B5CF6' }}
-          onClick={onSimulateAccept}
-        >
-          ✓ Simulate: Owner Accepts
-        </button>
-      )}
     </div>
   );
 }
@@ -472,11 +470,6 @@ export default function RenterRequests() {
                           cancelBookingRequest(id);
                           toast.info('Request Cancelled', 'Your pending request has been cancelled.');
                         }}
-                        onSimulateAccept={() => {
-                          // Demo: simulate the owner accepting this request
-                          acceptBookingRequest(req.requestId || req.id);
-                          toast.success('Owner accepted!', 'Head to the bike — you have 20 minutes to arrive. Take a before photo to start the ride.');
-                        }}
                       />
                     ))}
                   </div>
@@ -551,7 +544,7 @@ export default function RenterRequests() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {req.type === 'sent' ? `Sent: ${req.vehicleName || req.vehicle}` : `Ride: ${req.owner}`}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {req.type === 'sent'
                           ? `৳${req.totalFare}`
                           : `${req.pickup || req.date} → ${req.dropoff || ''} · ৳${req.totalFare || req.estimatedFare}`}

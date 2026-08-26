@@ -239,11 +239,11 @@ export default function OwnerDashboard() {
     acc[e.vehicleId] = (acc[e.vehicleId] || 0) + e.amount;
     return acc;
   }, {});
-  const totalEarned = Object.values(earningsPerBike).reduce((a, b) => a + b, 0) + (data.totalEarnings || 0);
+  const totalEarned = data.totalEarnings || 0;
 
   const statCards = [
-    { label: 'Total Bikes', value: myListings.length, color: '#8B5CF6', bg: '#F5F3FF', route: null, icon: <Bike size={22} /> },
-    { label: 'Active Now', value: activeScooters.length, color: '#3B82F6', bg: '#EFF6FF', route: null, icon: <Activity size={22} /> },
+    { label: 'Total Bikes', value: myListings.length, color: '#8B5CF6', bg: '#F5F3FF', route: '/owner/bikes', icon: <Bike size={22} /> },
+    { label: 'Active Now', value: activeScooters.length, color: '#3B82F6', bg: '#EFF6FF', route: '/owner/requests', icon: <Activity size={22} /> },
     { label: 'Total Earned', value: `৳${totalEarned.toLocaleString()}`, color: '#00B14F', bg: '#F0FDF4', route: '/owner/earnings', icon: <DollarSign size={22} /> },
   ];
 
