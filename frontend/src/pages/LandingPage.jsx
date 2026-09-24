@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -44,14 +44,14 @@ export default function LandingPage() {
           </p>
 
           <div className="landing-hero__cta-group">
+            <button className="btn btn-lg landing-hero__btn-tertiary" onClick={goList}>
+              <Users size={20} /> List & Earn
+            </button>
             <button className="btn btn-lg landing-hero__btn-primary" onClick={goBook}>
               <Bike size={20} /> Book a Vehicle
             </button>
             <button className="btn btn-lg landing-hero__btn-secondary" onClick={goRide}>
               <MapPin size={20} /> Find a Ride
-            </button>
-            <button className="btn btn-lg landing-hero__btn-tertiary" onClick={goList}>
-              <Users size={20} /> List &amp; Earn
             </button>
           </div>
         </div>

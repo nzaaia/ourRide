@@ -33,7 +33,7 @@ function useCountdown(startIso, limitMinutes = 20) {
 }
 
 export function AcceptedBikeCard({ req }) {
-  const { submitBeforePhoto, submitAfterPhoto, completeTrip, requestMoreTime, cancelBookingRequest } = useAuth();
+  const { submitBeforePhoto, submitAfterPhoto, completeTrip, requestMoreTime, cancelBookingRequest, activePassengerRides } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   const arrivalCountdown = useCountdown(req.acceptedAt, 20); // 20-min window to reach bike
@@ -241,7 +241,14 @@ export function AcceptedBikeCard({ req }) {
                 </div>
                 <DollarSign size={26} color="var(--primary)" />
               </div>
-              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { completeTrip(req.requestId || req.id); toast.success('Trip completed', 'Payment confirmed. Please rate the owner.'); }}>
+              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { 
+                if (activePassengerRides && activePassengerRides.length > 0) {
+                  toast.error('Action Blocked', 'You must complete your active passenger ride before returning the bike.');
+                  return;
+                }
+                completeTrip(req.requestId || req.id); 
+                toast.success('Trip completed', 'Payment confirmed. Please rate the owner.'); 
+              }}>
                 <CheckCircle2 size={17} /> Confirm Payment & Complete Trip
               </button>
             </>
@@ -283,7 +290,7 @@ function PendingBikeCard({ req, onMessage, onCancel }) {
           className="btn btn-outline btn-sm" 
           style={{ flex: 1, color: 'var(--error)', borderColor: 'var(--error)' }} 
           onClick={() => {
-            onCancel(req.id);
+            onCancel(req.requestId || req.id);
           }}
         >
           Cancel Request
@@ -373,7 +380,7 @@ export default function RenterRequests() {
 
   // 'accepted' = owner accepted, 'active' = legacy alias for accepted, 'in_use'/'returning' tracked via bikeStatus
   const acceptedReqs = renterBookingRequests.filter(r =>
-    r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning'
+    r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning' || r.status === 'active'
   );
   
   const activeReqs = renterBookingRequests.filter(r => r.status === 'active'); // legacy fallback
@@ -387,7 +394,7 @@ export default function RenterRequests() {
   const hasActiveBike = renterBookingRequests.some(r => r.status === 'accepted' || r.bikeStatus === 'in_use' || r.bikeStatus === 'returning') || data.listings.some(l => l.ownerId === user?.id && l.status === 'active');
   const passReqs = data.availableRideRequests;
 
-  const sentCount = activeReqs.length + acceptedReqs.length + pendingReqs.length;
+  const sentCount = acceptedReqs.length + pendingReqs.length;
   const receivedCount = passReqs.length;
   const pastSent = pastReqs.map(r => ({ ...r, type: 'sent', displayStatus: 'accepted' }));
   const pastReceived = (data.pastTrips || []).map(t => ({ ...t, type: 'received', displayStatus: 'accepted' }));
@@ -541,7 +548,7 @@ export default function RenterRequests() {
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {req.type === 'sent' ? `Sent: ${req.vehicleName || req.vehicle}` : `Ride: ${req.owner}`}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {req.type === 'sent'
                           ? `৳${req.totalFare}`
                           : `${req.pickup || req.date} → ${req.dropoff || ''} · ৳${req.totalFare || req.estimatedFare}`}

@@ -6,6 +6,7 @@ import InstallPrompt from './components/InstallPrompt';
 
 // Public Pages
 import LandingPage from './pages/LandingPage';
+import DemoLogin from './pages/DemoLogin';
 
 // Shared Pages
 import ProfilePage from './pages/ProfilePage';
@@ -64,6 +65,7 @@ function App() {
           <Route path="/chat/:chatId" element={protectedEl(<Chat />)} />
           <Route path="/chat" element={protectedEl(<Chat />)} />
           <Route path="/profile" element={protectedEl(<ProfilePage />)} />
+          <Route path="/demo" element={<DemoLogin />} />
 
           {/* Owner Routes */}
           <Route path="/owner/dashboard" element={protectedEl(<OwnerDashboard />)} />

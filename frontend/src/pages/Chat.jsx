@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, Send, Phone, Bot } from 'lucide-react';
+import { ChevronLeft, Send, Phone } from 'lucide-react';
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -26,35 +26,45 @@ export default function Chat() {
     setText('');
   };
 
-  // Find other participant's name based on booking requests
-  const relatedBooking = renterBookingRequests.find(r => r.requestId === actualChatId || r.id === actualChatId)
-    || data.incomingRequests.find(r => r.id === actualChatId);
-    
-  const relatedPassengerRide = activePassengerRides?.find(r => r.id === actualChatId) 
-    || (data.myActiveRideRequest?.id === actualChatId ? data.myActiveRideRequest : null);
-    
-  let otherName = 'Chat';
-  let otherAvatar = 'https://i.pravatar.cc/150';
-  
-  if (relatedBooking) {
-    if (relatedBooking.renterId === user.id || relatedBooking.renterName === user.name) {
-      otherName = relatedBooking.ownerName || 'Owner';
-      otherAvatar = relatedBooking.ownerAvatar || otherAvatar;
-    } else {
-      otherName = relatedBooking.renterName || 'Renter';
-      otherAvatar = relatedBooking.renterAvatar || otherAvatar;
-    }
-  } else if (relatedPassengerRide) {
-    if (relatedPassengerRide.passengerId === user.id) {
-      // Current user is the passenger, chatting with renter
-      otherName = relatedPassengerRide.counterOffer?.renterName || 'Rider';
-      otherAvatar = 'https://i.pravatar.cc/150'; // Rider avatar isn't explicitly saved in ride_requests right now
-    } else {
-      // Current user is the renter, chatting with passenger
-      otherName = relatedPassengerRide.passengerName || 'Passenger';
-      otherAvatar = relatedPassengerRide.passengerAvatar || otherAvatar;
+  // 1. Try taking from searchParams first (UI links)
+  let contactName = searchParams.get('name');
+  let contactContext = searchParams.get('context');
+  let contactAvatar = searchParams.get('avatar');
+
+  // 2. If not provided via UI, derive from data
+  if (!contactName) {
+    const relatedBooking = renterBookingRequests.find(r => r.requestId === actualChatId || r.id === actualChatId)
+      || data.incomingRequests.find(r => r.id === actualChatId);
+      
+    const relatedPassengerRide = activePassengerRides?.find(r => r.id === actualChatId) 
+      || (data.myActiveRideRequest?.id === actualChatId ? data.myActiveRideRequest : null);
+
+    contactName = 'Your Contact';
+    contactAvatar = 'https://i.pravatar.cc/150?u=default';
+    contactContext = 'Active thread';
+
+    if (relatedBooking) {
+      if (user.id === relatedBooking.renterId) {
+        contactName = relatedBooking.ownerName || 'Owner';
+        contactAvatar = relatedBooking.ownerAvatar || contactAvatar;
+      } else {
+        contactName = relatedBooking.renterName || 'Renter';
+        contactAvatar = relatedBooking.renterAvatar || contactAvatar;
+      }
+    } else if (relatedPassengerRide) {
+      if (user.id === relatedPassengerRide.passengerId) {
+        contactName = 'Driver';
+      } else {
+        contactName = relatedPassengerRide.passengerName || 'Passenger';
+        contactAvatar = relatedPassengerRide.passengerAvatar || contactAvatar;
+      }
     }
   }
+
+  // Fallbacks
+  contactName = contactName || 'Your Contact';
+  contactContext = contactContext || 'Active thread';
+  contactAvatar = contactAvatar || 'https://i.pravatar.cc/150?u=default';
 
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: 0, height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>

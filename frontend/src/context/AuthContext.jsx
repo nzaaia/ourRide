@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { initialMockData } from '../mockData';
-import { subscribeToChanges } from '../lib/supabaseClient';
+import { subscribeToChanges, supabase } from '../lib/supabaseClient';
 import * as api from '../lib/api';
 import { useToast } from '../components/ui/Toast';
 
@@ -98,6 +98,38 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // === Auth ===
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        setUser({ id: session.user.id, name: session.user.user_metadata?.full_name || session.user.email, email: session.user.email, avatar: session.user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150' });
+        setRole('renter'); // Default role for real auth for now
+        loadServerData(session.user.id);
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        setUser({ id: session.user.id, name: session.user.user_metadata?.full_name || session.user.email, email: session.user.email, avatar: session.user.user_metadata?.avatar_url || 'https://i.pravatar.cc/150' });
+        loadServerData(session.user.id);
+      } else {
+        // Only logout if not a demo user
+        if (isAuthenticated && !['u1', 'u_renter', 'u_passenger'].includes(user?.id)) {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [loadServerData]);
+
+  const loginWithOAuth = async (provider = 'google') => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.origin + '/demo' }
+    });
+  };
+
   const login = (selectedRole = 'renter') => {
     const persona = DEMO_USERS[selectedRole] || DEMO_USERS.renter;
     setIsAuthenticated(true);
@@ -106,7 +138,8 @@ export const AuthProvider = ({ children }) => {
     loadServerData(persona.id);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
     setRole('guest');
     setUser(null);
@@ -557,7 +590,7 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated, role, user, data,
       activeRentals, activePassengerRides, messages,
       renterBookingRequests,
-      toggleRole, logout, login,
+      toggleRole, logout, login, loginWithOAuth,
       addListing, updateListing,
       addBookingRequest, updateBookingStatus, acceptBookingRequest,
       addRenterBookingRequest, updateRenterBookingStatus, cancelBookingRequest,
