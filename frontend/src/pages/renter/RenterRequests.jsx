@@ -254,7 +254,7 @@ export function AcceptedBikeCard({ req }) {
 }
 
 
-function PendingBikeCard({ req, onMessage, onSimulateAccept, onCancel }) {
+function PendingBikeCard({ req, onMessage, onCancel }) {
   return (
     <div style={{
       background: 'white', border: '1.5px solid #FDE68A',
@@ -289,15 +289,6 @@ function PendingBikeCard({ req, onMessage, onSimulateAccept, onCancel }) {
           Cancel Request
         </button>
       </div>
-      {onSimulateAccept && (
-        <button
-          className="btn btn-primary btn-sm"
-          style={{ width: '100%', marginTop: 8, background: '#8B5CF6', borderColor: '#8B5CF6' }}
-          onClick={onSimulateAccept}
-        >
-          ✓ Simulate: Owner Accepts
-        </button>
-      )}
     </div>
   );
 }
@@ -475,11 +466,6 @@ export default function RenterRequests() {
                         onCancel={() => {
                           cancelBookingRequest(req.requestId || req.id);
                           toast.info('Request Cancelled', 'Your pending request has been cancelled.');
-                        }}
-                        onSimulateAccept={() => {
-                          // Demo: simulate the owner accepting this request
-                          acceptBookingRequest(req.requestId || req.id);
-                          toast.success('Owner accepted!', 'Head to the bike — you have 20 minutes to arrive. Take a before photo to start the ride.');
                         }}
                       />
                     ))}
