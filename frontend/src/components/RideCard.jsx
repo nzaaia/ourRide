@@ -1,32 +1,33 @@
 import { Star } from 'lucide-react';
+import './RideCard.css';
 
 export default function RideCard({ ride, onBook }) {
   return (
-    <div className="card" style={{ marginBottom: 'var(--space-4)' }}>
-      <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-3)' }}>
+    <div className="card ride-card">
+      <div className="flex justify-between items-center ride-card__header">
         <div className="flex items-center gap-3">
-          <img src={ride.driverAvatar} alt={ride.driverName} style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+          <img src={ride.driverAvatar} alt={ride.driverName} className="ride-card__avatar" />
           <div>
-            <h3 style={{ fontSize: '16px', margin: 0 }}>{ride.driverName}</h3>
-            <span className="text-sm font-semibold" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <h3 className="ride-card__driver-name">{ride.driverName}</h3>
+            <span className="text-sm font-semibold ride-card__rating">
               <Star size={12} color="#F59E0B" fill="#F59E0B" /> {ride.rating}
             </span>
           </div>
         </div>
-        <div className="font-bold" style={{ fontSize: '18px', color: 'var(--primary)' }}>
+        <div className="font-bold ride-card__fare">
           ৳{ride.flatFee}
         </div>
       </div>
       
-      <div className="flex-col gap-2" style={{ marginBottom: 'var(--space-4)', position: 'relative', paddingLeft: 'var(--space-4)' }}>
-        <div style={{ position: 'absolute', left: '6px', top: '8px', bottom: '8px', width: '2px', backgroundColor: 'var(--border-color)' }}></div>
-        <div style={{ position: 'relative' }}>
-          <div style={{ position: 'absolute', left: '-16px', top: '6px', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></div>
+      <div className="flex-col gap-2 ride-card__route">
+        <div className="ride-card__route-line"></div>
+        <div className="ride-card__route-point">
+          <div className="ride-card__route-dot--origin"></div>
           <p className="font-semibold" style={{ margin: 0 }}>{ride.origin}</p>
           <p className="text-muted text-sm" style={{ margin: 0 }}>{ride.departureTime}</p>
         </div>
-        <div style={{ position: 'relative', marginTop: 'var(--space-2)' }}>
-          <div style={{ position: 'absolute', left: '-16px', top: '6px', width: '8px', height: '8px', borderRadius: '50%', border: '2px solid var(--primary)', backgroundColor: 'white' }}></div>
+        <div className="ride-card__route-point ride-card__destination">
+          <div className="ride-card__route-dot--destination"></div>
           <p className="font-semibold" style={{ margin: 0 }}>{ride.destination}</p>
         </div>
       </div>

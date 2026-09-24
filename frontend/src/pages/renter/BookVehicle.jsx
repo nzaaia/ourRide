@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ChevronLeft, Phone, Star, Clock, CheckCircle2, MapPin, ShieldCheck } from 'lucide-react';
 import { useToast } from '../../components/ui/Toast';
+import './BookVehicle.css';
 
 export default function BookVehicle() {
   const { id } = useParams();
@@ -26,7 +27,7 @@ export default function BookVehicle() {
     return () => clearTimeout(t);
   }, []);
 
-  if (!vehicle) return <div style={{ padding: 60, textAlign: 'center' }}>Vehicle not found</div>;
+  if (!vehicle) return <div className="book-vehicle__not-found">Vehicle not found</div>;
 
   const totalFare = (vehicle.hourlyRate + vehicle.wearTearRate) * hours;
 
@@ -85,16 +86,16 @@ export default function BookVehicle() {
 
   if (booked) {
     return (
-      <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center', paddingTop: 40 }}>
-        <div style={{ width: 72, height: 72, margin: '0 auto 20px', borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="book-vehicle__success">
+        <div className="book-vehicle__success-icon">
           <CheckCircle2 size={38} color="var(--primary)" />
         </div>
-        <h2 style={{ marginBottom: 10 }}>Request sent!</h2>
-        <p className="text-muted" style={{ marginBottom: 28 }}>
+        <h2 className="book-vehicle__success-title">Request sent!</h2>
+        <p className="text-muted book-vehicle__success-desc">
           Your booking for <strong>{vehicle.vehicleName}</strong> is with {vehicle.ownerName}. Once accepted, the exact bike location will be revealed — you'll have 20 minutes to arrive.
         </p>
-        <div className="card" style={{ marginBottom: 24, textAlign: 'left' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="card book-vehicle__success-summary">
+          <div className="book-vehicle__success-grid">
             <div>
               <div className="text-muted text-sm">Vehicle</div>
               <div className="font-bold">{vehicle.vehicleName}</div>
@@ -105,19 +106,19 @@ export default function BookVehicle() {
             </div>
             <div>
               <div className="text-muted text-sm">Total fare</div>
-              <div className="font-bold text-primary" style={{ fontSize: 20 }}>৳{totalFare}</div>
+              <div className="font-bold text-primary book-vehicle__success-fare">৳{totalFare}</div>
             </div>
             <div>
               <div className="text-muted text-sm">Purpose</div>
-              <div className="font-bold" style={{ textTransform: 'capitalize' }}>{purpose.replace('_', ' ')}</div>
+              <div className="font-bold book-vehicle__success-purpose">{purpose.replace('_', ' ')}</div>
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => navigate('/renter/requests')}>
+        <div className="book-vehicle__success-actions">
+          <button className="btn btn-outline book-vehicle__success-btn" onClick={() => navigate('/renter/requests')}>
             My requests
           </button>
-          <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate('/renter/dashboard')}>
+          <button className="btn btn-primary book-vehicle__success-btn" onClick={() => navigate('/renter/dashboard')}>
             Dashboard
           </button>
         </div>
@@ -126,35 +127,35 @@ export default function BookVehicle() {
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', paddingBottom: 90 }}>
+    <div className="book-vehicle">
 
       {loading ? (
         <div>
           <div className="page-header"><span className="header-back"><ChevronLeft size={20} /></span>
-            <div className="skeleton" style={{ height: 24, width: 160 }} />
+            <div className="skeleton book-vehicle__skeleton-header" />
           </div>
-          <div className="skeleton" style={{ height: 180, borderRadius: 16, marginBottom: 16 }} />
-          <div className="skeleton" style={{ height: 120, borderRadius: 16 }} />
+          <div className="skeleton book-vehicle__skeleton-hero" />
+          <div className="skeleton book-vehicle__skeleton-detail" />
         </div>
       ) : (
         <>
           {/* Vehicle card */}
-          <div className="bike-tile" style={{ marginBottom: 20 }}>
-            <div className="tile-media" style={{ aspectRatio: '16 / 9' }}>
+          <div className="bike-tile book-vehicle__vehicle-card">
+            <div className="tile-media book-vehicle__image-wrapper">
               <img src={vehicle.image} alt={vehicle.vehicleName} />
-              <div style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(12,61,36,0.92)', color: '#fff', padding: '3px 10px', borderRadius: 999, fontSize: 13, fontWeight: 700 }}>
+              <div className="book-vehicle__price-badge">
                 ৳{vehicle.hourlyRate}/hr
               </div>
             </div>
-            <div className="tile-body" style={{ padding: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ minWidth: 0 }}>
-                  <h3 style={{ marginBottom: 2 }}>{vehicle.vehicleName}</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 13 }}>
+            <div className="tile-body book-vehicle__tile-body">
+              <div className="book-vehicle__tile-meta">
+                <div className="book-vehicle__tile-name-block">
+                  <h3 className="book-vehicle__vehicle-name">{vehicle.vehicleName}</h3>
+                  <div className="book-vehicle__vehicle-location">
                     <MapPin size={13} /> {vehicle.location}
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#F59E0B', fontWeight: 700, fontSize: 14 }}>
+                <div className="book-vehicle__vehicle-rating">
                   <Star size={14} fill="#F59E0B" /> {vehicle.rating}
                 </div>
               </div>
@@ -162,49 +163,49 @@ export default function BookVehicle() {
           </div>
 
           {/* Owner */}
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: 14 }}>
-            <img src={vehicle.ownerAvatar} alt={vehicle.ownerName} className="avatar" style={{ width: 46, height: 46 }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="card book-vehicle__owner-card">
+            <img src={vehicle.ownerAvatar} alt={vehicle.ownerName} className="avatar book-vehicle__owner-avatar" />
+            <div className="book-vehicle__owner-info">
               <div className="font-bold">{vehicle.ownerName}</div>
               <div className="text-muted text-sm">{vehicle.totalTrips} trips completed</div>
             </div>
-            <button className="btn btn-outline btn-sm" style={{ width: 'auto' }} onClick={() => toast.info('Call', `Calling ${vehicle.ownerName}...`)}>
+            <button className="btn btn-outline btn-sm book-vehicle__call-btn" onClick={() => toast.info('Call', `Calling ${vehicle.ownerName}...`)}>
               <Phone size={14} /> Call
             </button>
           </div>
 
           {/* Time & duration */}
-          <div className="card" style={{ marginBottom: 16, padding: 16 }}>
-            <div className="micro-label" style={{ marginBottom: 12 }}>Time of booking</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <div className="card book-vehicle__time-card">
+            <div className="micro-label book-vehicle__time-label">Time of booking</div>
+            <div className="book-vehicle__time-grid">
               <div>
-                <label className="text-sm font-semibold" style={{ display: 'block', marginBottom: 6 }}>Day</label>
+                <label className="text-sm font-semibold book-vehicle__field-label">Day</label>
                 <input type="date" className="input" value={selectedDay} min={today} onChange={e => setSelectedDay(e.target.value)} />
               </div>
               <div>
-                <label className="text-sm font-semibold" style={{ display: 'block', marginBottom: 6 }}>Time</label>
+                <label className="text-sm font-semibold book-vehicle__field-label">Time</label>
                 <input type="time" className="input" value={selectedTime} onChange={e => setSelectedTime(e.target.value)} />
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div className="book-vehicle__duration-row">
               <div className="flex items-center gap-2 text-muted text-sm"><Clock size={15} /> Duration (hours)</div>
               <div className="flex items-center gap-3">
-                <button onClick={() => setHours(Math.max(1, hours - 1))} aria-label="Decrease hours" style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid var(--border-color)', fontWeight: 700, fontSize: 18 }}>−</button>
-                <span style={{ fontWeight: 800, fontSize: 20, minWidth: 40, textAlign: 'center' }}>{hours}h</span>
-                <button onClick={() => setHours(hours + 1)} aria-label="Increase hours" style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid var(--primary)', color: 'var(--primary)', fontWeight: 700, fontSize: 18 }}>+</button>
+                <button onClick={() => setHours(Math.max(1, hours - 1))} aria-label="Decrease hours" className="book-vehicle__duration-dec">−</button>
+                <span className="book-vehicle__duration-value">{hours}h</span>
+                <button onClick={() => setHours(hours + 1)} aria-label="Increase hours" className="book-vehicle__duration-inc">+</button>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+            <div className="book-vehicle__return-note">
               <Clock size={13} /> Return within 15 mins after your time ends
             </div>
           </div>
 
           {/* Purpose */}
-          <div className="card" style={{ marginBottom: 16, padding: 16 }}>
-            <div className="micro-label" style={{ marginBottom: 12 }}>Trip purpose</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <div className="card book-vehicle__purpose-card">
+            <div className="micro-label book-vehicle__purpose-label">Trip purpose</div>
+            <div className="book-vehicle__purpose-grid">
               {[
                 { id: 'personal', label: 'Personal' },
                 { id: 'ridesharing', label: 'Ride share' },
@@ -213,16 +214,15 @@ export default function BookVehicle() {
                 <button
                   key={o.id}
                   onClick={() => setPurpose(o.id)}
-                  className={`pill ${purpose === o.id ? 'active' : ''}`}
-                  style={{ textAlign: 'center', padding: '10px 4px', minHeight: 44 }}
+                  className={`pill book-vehicle__purpose-pill ${purpose === o.id ? 'active' : ''}`}
                 >
                   {o.label}
                 </button>
               ))}
             </div>
             {purpose !== 'personal' && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: 'var(--primary-light)', borderRadius: 10, padding: 10, marginTop: 12, fontSize: 13, color: '#065F46', fontWeight: 600 }}>
-                <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+              <div className="book-vehicle__rideshare-note">
+                <ShieldCheck size={16} className="book-vehicle__rideshare-icon" />
                 Ride sharing is enabled — you can pick up passengers during this rental.
               </div>
             )}
@@ -233,15 +233,14 @@ export default function BookVehicle() {
       {/* Sticky bottom fare + CTA */}
       {!loading && !booked && (
         <div className="sticky-action-bar">
-          <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', gap: 14, alignItems: 'center' }}>
-            <div style={{ flexShrink: 0 }}>
+          <div className="book-vehicle__action-inner">
+            <div className="book-vehicle__fare-info">
               <div className="text-xs text-muted font-semibold">Total fare</div>
-              <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--primary)', lineHeight: 1.1 }}>৳{totalFare}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>৳{vehicle.hourlyRate}/hr + wear</div>
+              <div className="book-vehicle__fare-value">৳{totalFare}</div>
+              <div className="book-vehicle__fare-breakdown">৳{vehicle.hourlyRate}/hr + wear</div>
             </div>
             <button
-              className="btn btn-primary btn-lg"
-              style={{ flex: 1 }}
+              className="btn btn-primary btn-lg book-vehicle__book-btn"
               onClick={handleBook}
               disabled={sending}
             >
