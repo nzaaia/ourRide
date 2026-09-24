@@ -71,7 +71,8 @@ export const AuthProvider = ({ children }) => {
   const sync = useCallback(async (mutate, apiCall, snap) => {
     mutate();
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL) {
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      if (!url || url.includes('zofkpkzvunlplmmhyvzs')) {
         // Local mode without backend: just keep the optimistic update
         return;
       }
