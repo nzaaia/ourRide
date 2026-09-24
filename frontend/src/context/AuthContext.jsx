@@ -71,6 +71,10 @@ export const AuthProvider = ({ children }) => {
   const sync = useCallback(async (mutate, apiCall, snap) => {
     mutate();
     try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        // Local mode without backend: just keep the optimistic update
+        return;
+      }
       await apiCall();
     } catch (err) {
       console.error('Sync failed:', err);
